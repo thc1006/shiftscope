@@ -49,7 +49,11 @@ def build_mcp_tools(registry: AnalyzerRegistry) -> list[dict[str, Any]]:
     return tools
 
 
-def create_mcp_server(registry: AnalyzerRegistry) -> Any:
+def create_mcp_server(
+    registry: AnalyzerRegistry,
+    host: str = "127.0.0.1",
+    port: int = 8080,
+) -> Any:
     """Create a FastMCP server with tools for all registered analyzers.
 
     Requires the 'mcp' optional extra to be installed.
@@ -61,7 +65,7 @@ def create_mcp_server(registry: AnalyzerRegistry) -> Any:
             "MCP support requires the 'mcp' extra. Install with: pip install shiftscope[mcp]"
         ) from err
 
-    mcp = FastMCP("ShiftScope Migration Intelligence")
+    mcp = FastMCP("ShiftScope Migration Intelligence", host=host, port=port)
 
     for tool_def in build_mcp_tools(registry):
         mcp.tool(name=tool_def["name"], description=tool_def["description"])(tool_def["fn"])

@@ -7,6 +7,7 @@ Severity mapping: critical→error, warning→warning, info→note.
 from __future__ import annotations
 
 import json
+from pathlib import PurePosixPath
 from typing import Any
 
 from shiftscope import __version__
@@ -21,6 +22,14 @@ _SEVERITY_TO_LEVEL = {
     Severity.WARNING: "warning",
     Severity.INFO: "note",
 }
+
+
+def _to_sarif_uri(source: str) -> str:
+    """Convert a source path to a SARIF-compatible URI."""
+    path = PurePosixPath(source)
+    if path.is_absolute():
+        return f"file://{source}"
+    return source
 
 
 def render_sarif(report: Report, indent: int = 2) -> str:
@@ -52,7 +61,7 @@ def render_sarif(report: Report, indent: int = 2) -> str:
                     {
                         "physicalLocation": {
                             "artifactLocation": {
-                                "uri": report.source,
+                                "uri": _to_sarif_uri(report.source),
                             },
                         },
                     },

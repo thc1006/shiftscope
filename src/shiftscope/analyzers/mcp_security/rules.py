@@ -123,9 +123,11 @@ class CommandInjectionRule(Rule):
         return bool(context.get("command") or context.get("args"))
 
     def evaluate(self, context: dict[str, Any]) -> Finding | None:
+        cmd = str(context.get("command", "")).lower()
         args = context.get("args", [])
         args_str = " ".join(str(a) for a in args).lower()
-        if any(name in args_str for name in _SHELL_COMMANDS):
+        check_str = f"{cmd} {args_str}"
+        if any(name in check_str for name in _SHELL_COMMANDS):
             return Finding(
                 rule_id=self.rule_id,
                 severity=self.severity,

@@ -98,4 +98,4 @@ class TestMarkdownRenderer:
     def test_render_markdown_empty_findings(self):
         report = Report(analyzer_name="a", analyzer_version="0.1.0", source="s", findings=[])
         md = render_markdown(report)
-        assert "No findings" in md or "0 finding" in md or len(md) > 0
+        assert "No findings" in md or "0 finding" in md

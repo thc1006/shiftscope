@@ -38,18 +38,32 @@ class TestMCPServeCommand:
 
     def test_stdio_calls_mcp_run(self):
         mock_mcp = MagicMock()
-        with patch("shiftscope.mcp.bridge.create_mcp_server", return_value=mock_mcp):
+        with patch("shiftscope.mcp.bridge.create_mcp_server", return_value=mock_mcp) as mock_create:
             runner = CliRunner()
             result = runner.invoke(_build_app(), ["mcp-serve", "--stdio"])
             assert result.exit_code == 0
+            mock_create.assert_called_once()
             mock_mcp.run.assert_called_once_with(transport="stdio")
 
     def test_http_calls_mcp_run_with_port(self):
         mock_mcp = MagicMock()
-        with patch("shiftscope.mcp.bridge.create_mcp_server", return_value=mock_mcp):
+        with patch("shiftscope.mcp.bridge.create_mcp_server", return_value=mock_mcp) as mock_create:
             runner = CliRunner()
-            result = runner.invoke(_build_app(), ["mcp-serve", "--http", "--port", "9090"])
-            assert result.exit_code == 0
-            mock_mcp.run.assert_called_once_with(
-                transport="streamable-http", host="0.0.0.0", port=9090
+            result = runner.invoke(
+                _build_app(), ["mcp-serve", "--http", "--host", "0.0.0.0", "--port", "9090"]
             )
+            assert result.exit_code == 0
+            mock_create.assert_called_once()
+            call_kwargs = mock_create.call_args
+            assert call_kwargs[1]["host"] == "0.0.0.0"
+            assert call_kwargs[1]["port"] == 9090
+            mock_mcp.run.assert_called_once_with(transport="streamable-http")
+
+    def test_http_default_host_is_localhost(self):
+        mock_mcp = MagicMock()
+        with patch("shiftscope.mcp.bridge.create_mcp_server", return_value=mock_mcp) as mock_create:
+            runner = CliRunner()
+            result = runner.invoke(_build_app(), ["mcp-serve", "--http"])
+            assert result.exit_code == 0
+            call_kwargs = mock_create.call_args
+            assert call_kwargs[1]["host"] == "127.0.0.1"

@@ -19,7 +19,7 @@ _NGINX_PREFIX = "nginx.ingress.kubernetes.io/"
 def _ingress_fqn(ig: dict) -> str:
     """Return namespace/name for unambiguous Ingress identification."""
     ns = ig.get("namespace", "")
-    return f"{ns}/{ig['name']}" if ns else _ingress_fqn(ig)
+    return f"{ns}/{ig['name']}" if ns else ig["name"]
 
 
 class RegexPrefixRule(Rule):
@@ -143,8 +143,7 @@ class TrailingSlashRule(Rule):
             p["path"]
             for p in context.get("paths", [])
             if p.get("pathType") in ("Exact", "Prefix")
-            and p.get("path", "").endswith("/")
-            and p.get("path") != "/"
+            and not p.get("path", "/").endswith("/")
         ]
         if not affected:
             return None
