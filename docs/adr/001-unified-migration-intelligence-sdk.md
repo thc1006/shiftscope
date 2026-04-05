@@ -361,6 +361,108 @@ Five parallel research tracks were conducted to stress-test this ADR:
 ### Track 5: CNCF Positioning
 **Conclusion:** TAG Infrastructure (new since May 2025 restructuring) or TAG Developer Experience for positioning. CNCF "Cloud-Native Foundations for Distributed Agentic Systems" initiative (cncf/toc#1746) is directly relevant. Konveyor is complementary (app-layer), not competitive. CNCF Landscape category: "Provisioning > Automation & Configuration". Next TOC Sandbox review: 2026-06-09.
 
+## Implementation Progress & Handoff Guide
+
+> This section is a living record designed for cross-device/cross-session continuity.
+> Any developer (including future-you on another machine) can read this section
+> to understand exactly where the project stands and what to do next.
+
+### Completed (Phase 1, Milestone 1 — 2026-04-05)
+
+| Component | Files | Tests | Status |
+|-----------|-------|-------|--------|
+| Core Models (Finding, Report, Severity) | `src/shiftscope/core/models.py` | `tests/test_models.py` (14 tests) | DONE |
+| Rule ABC (applies_to + evaluate) | `src/shiftscope/core/rule.py` | `tests/test_rule.py` (8 tests) | DONE |
+| Analyzer ABC + Registry + run_rules() | `src/shiftscope/core/analyzer.py` | `tests/test_analyzer.py` (13 tests) | DONE |
+| JSON Renderer | `src/shiftscope/render/json_renderer.py` | `tests/test_render.py` (6 tests) | DONE |
+| Markdown Renderer | `src/shiftscope/render/markdown_renderer.py` | `tests/test_render.py` (5 tests) | DONE |
+| Public API re-exports | `src/shiftscope/__init__.py` | — | DONE |
+| Governance files | LICENSE, CONTRIBUTING, SECURITY, CoC, MAINTAINERS | — | DONE |
+| ADR-001 (cross-validated) | `docs/adr/001-*.md` | — | DONE |
+| pyproject.toml (hatchling + min bounds) | `pyproject.toml` | — | DONE |
+| No-AI-coauthor guard | `.claude/settings.json`, `.git/hooks/commit-msg` | Verified | DONE |
+| **Total: 46 tests passing** | | | |
+
+### Remaining (Phase 1, Milestone 2)
+
+| Task | Description | Key Design Decisions | Deps |
+|------|-------------|---------------------|------|
+| **Eval Harness** | Golden-file test runner: load case → run analyzer → diff against golden JSON | Use syrupy for pytest-native snapshots; support `--update-golden`; integrate with `EvalHarness` class | Models, Analyzer |
+| **CLI Scaffolding** | Auto-generate Typer CLI from registered analyzers: `shiftscope analyze <analyzer> <input>` | Typer + Rich; subcommands per analyzer; `--output json|markdown`; graceful ImportError for optional `cli` extra | Analyzer, Registry |
+| **MCP Bridge** | Auto-generate MCP tools from analyzers: `analyze_<name>`, `list_rules_<name>` | Use built-in FastMCP `@mcp.tool()` decorators; Pydantic models as params; stdio + Streamable HTTP transports; graceful ImportError for optional `mcp` extra | Analyzer, Registry |
+| **Gateway API Analyzer** | Port from `gateway-migration-orchestrator/`: annotation rules, TLS risk rules, implementation profiles | YAML parser for Ingress resources; rules: cors, backend-protocol, auth-tls-secret, server-snippet, wildcard-tls; profiles: envoy-gateway, nginx-gw-fabric, cilium | All SDK core |
+
+### Remaining (Phase 2+)
+
+| Phase | Tasks | Target |
+|-------|-------|--------|
+| **Phase 2** | DRA analyzer (port from netintent-dra-bridge-v2); Helm 4 analyzer (port from helmforge-lab-m2); entry_points plugin discovery activation; README.md with quickstart | Community preview |
+| **Phase 3** | Telco intent analyzer; agent readiness analyzer; optional PydanticAI augmentation; A2A Agent Card | Broader adoption |
+| **Phase 4** | CNCF Landscape listing; TAG Infrastructure presentation; CNCF Sandbox proposal; CRD/Operator layer (Go wrapper) | CNCF submission (target: 2026-08 or 2026-10 TOC review) |
+| **Phase 5** | GitHub Action; CI/CD integration; Argo Workflows; KubeCon NA 2026 CFP submission | Ecosystem integration |
+
+### How to Continue Development on a New Device
+
+```bash
+# 1. Clone
+git clone https://github.com/thc1006/shiftscope.git
+cd shiftscope
+
+# 2. Install Python 3.12+ (recommended: uv)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv python install 3.12
+
+# 3. Bootstrap
+make bootstrap
+# OR manually: uv sync --group dev --group test --extra cli --extra mcp
+
+# 4. Verify everything works
+make verify
+# Should see: 46 passed (or more if you've added tests)
+
+# 5. Re-install commit-msg hook (not tracked by git clone)
+cat > .git/hooks/commit-msg << 'HOOK'
+#!/usr/bin/env bash
+msg_file="$1"
+if grep -Eiq 'Co-Authored-By:.*Claude|Generated with Claude Code' "$msg_file"; then
+  echo "❌ Commit message contains AI attribution. Remove it and try again." >&2
+  exit 1
+fi
+exit 0
+HOOK
+chmod +x .git/hooks/commit-msg
+
+# 6. Continue from the next pending task
+# See "Remaining (Phase 1, Milestone 2)" above
+```
+
+### Key Architectural Decisions to Preserve
+
+These decisions were cross-validated through 5 research tracks and should NOT be changed without re-evaluation:
+
+1. **Pydantic BaseModel** for Finding/Report (not dataclasses) — JSON Schema, validation, MCP integration
+2. **ABC** for Rule/Analyzer (not Protocol) — explicit opt-in, runtime enforcement
+3. **`applies_to()` + `evaluate()`** on Rule — Kyverno-inspired short-circuit pattern
+4. **`run_rules()` helper** on Analyzer — eliminates duplicated loop in every analyzer
+5. **`importlib.metadata.entry_points`** for plugin discovery — zero-dep, std lib
+6. **Minimum bounds (`>=`)** in pyproject.toml — SDK, not application
+7. **No Jinja2 core dep** — removed during code review; add back only when template customization needed
+8. **No AI co-authorship** — `.claude/settings.json` + git hook; enforced by project policy
+9. **Frozen models** — `ConfigDict(frozen=True)` on Finding/Report for immutability
+10. **MCP transport**: Streamable HTTP (remote), stdio (local); SSE deprecated
+
+### Source Projects (for porting analyzers)
+
+These 6 prototype projects in the same parent directory contain domain logic to port:
+
+| Analyzer to Build | Source Project | Key Source Files |
+|-------------------|---------------|-----------------|
+| Gateway API | `../gateway-migration-orchestrator/` | `src/*/rules.py`, `src/*/profiles.py`, `src/*/manifest_parser.py`, `configs/annotation_mappings.yaml` |
+| DRA Networking | `../netintent-dra-bridge-v2/` | `src/*/compiler.py`, `src/*/templates.py`, `src/*/models.py`, `configs/example-intent.json` |
+| Helm 4 Readiness | `../helmforge-lab-m2/helmforge-lab/` | `src/helmforge/analyzers.py`, `src/helmforge/oci_lab.py`, `configs/policy/` |
+| Telco Intent | `../telco-intent-provenance-lab/*/` | `src/telco_intent_lab/compiler.py`, `src/*/provenance.py`, `src/*/adapters/` |
+| Agent Readiness | `../agent-readiness-lab/*/` | `src/*/agents/orchestrator.py`, `src/*/schemas/readiness.py` |
+
 ## References
 
 - [CNCF Sandbox Application Process](https://github.com/cncf/sandbox)
