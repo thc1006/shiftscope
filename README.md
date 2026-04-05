@@ -142,7 +142,7 @@ class MyAnalyzer(Analyzer):
     def analyze(self, input_path, **kwargs):
         import json
         from pathlib import Path
-        config = json.loads(Path(input_path).read_text())
+        config = json.loads(Path(input_path).read_text(encoding="utf-8"))
         context = {"config": config}
         return Report(
             analyzer_name=self.name,

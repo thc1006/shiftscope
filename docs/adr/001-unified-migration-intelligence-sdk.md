@@ -441,7 +441,7 @@ HOOK
 chmod +x .git/hooks/commit-msg
 
 # 6. Continue from the next pending task
-# See "Remaining (Phase 1, Milestone 2)" above
+# See "Completed (Phase 1 M2 + Phase 2 + Phase 3)" and "Remaining (Phase 4+)" above
 ```
 
 ### Key Architectural Decisions to Preserve
