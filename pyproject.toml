@@ -63,9 +63,9 @@ telco-intent = "shiftscope.analyzers.telco_intent:TelcoIntentAnalyzer"
 agent-readiness = "shiftscope.analyzers.agent_readiness:AgentReadinessAnalyzer"
 
 [project.urls]
-Homepage = "https://shiftscope.dev"
+Homepage = "https://github.com/thc1006/shiftscope"
 Repository = "https://github.com/thc1006/shiftscope"
-Documentation = "https://shiftscope.dev/docs"
+Documentation = "https://github.com/thc1006/shiftscope/blob/v0.2.0/docs/adr/001-unified-migration-intelligence-sdk.md"
 
 [dependency-groups]
 dev = [

@@ -6,7 +6,7 @@ Thank you for your interest in contributing to ShiftScope!
 
 ```bash
 # Clone the repository
-git clone https://github.com/shiftscope/shiftscope.git
+git clone https://github.com/thc1006/shiftscope.git
 cd shiftscope
 
 # Install dependencies (requires uv)

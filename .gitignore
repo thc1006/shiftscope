@@ -18,3 +18,4 @@ htmlcov/
 .mypy_cache/
 out/
 artifacts/
+uv.lock
