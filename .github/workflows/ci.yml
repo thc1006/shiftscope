@@ -19,8 +19,8 @@ jobs:
           version: "0.11.3"
       - run: uv python install 3.12
       - run: uv sync --group dev --group test --extra cli
-      - run: uv run ruff check src tests analyzers
-      - run: uv run python -m compileall src tests analyzers -q
+      - run: uv run ruff check src tests
+      - run: uv run python -m compileall src tests -q
 
   test:
     runs-on: ubuntu-latest

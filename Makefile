@@ -11,13 +11,13 @@ test-cov:
 	uv run pytest --cov --cov-report=term-missing
 
 lint:
-	uv run ruff check src tests analyzers
+	uv run ruff check src tests
 
 format:
-	uv run ruff format src tests analyzers
+	uv run ruff format src tests
 
 verify: lint test
-	python -m compileall src tests analyzers -q
+	python -m compileall src tests -q
 
 clean:
 	rm -rf dist build *.egg-info .pytest_cache .coverage htmlcov out .ruff_cache
