@@ -53,7 +53,6 @@ def render_sarif(report: Report, indent: int = 2) -> str:
                         "physicalLocation": {
                             "artifactLocation": {
                                 "uri": report.source,
-                                "uriBaseId": "%SRCROOT%",
                             },
                         },
                     },
