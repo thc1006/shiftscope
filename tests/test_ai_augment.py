@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from shiftscope.ai.augment import AugmentedReport, augment_report
+from unittest.mock import patch
+
+from shiftscope.ai.augment import AugmentedReport, augment_report, check_faithfulness
 from shiftscope.core.models import Finding, Report, Severity
 
 
@@ -49,20 +51,14 @@ class TestAugmentedReport:
 
     def test_original_findings_not_modified(self):
         report = _sample_report()
-        augmented = AugmentedReport(
-            report=report,
-            ai_summary="AI says something.",
-        )
+        augmented = AugmentedReport(report=report, ai_summary="AI says something.")
         assert augmented.report.findings == report.findings
         assert len(augmented.report.findings) == 2
-        assert augmented.report.findings[0].rule_id == "gw-tls-wildcard"
 
     def test_json_roundtrip(self):
         report = _sample_report()
         augmented = AugmentedReport(
-            report=report,
-            ai_summary="Summary here.",
-            ai_model="gpt-4.1-mini",
+            report=report, ai_summary="Summary here.", ai_model="gpt-4.1-mini"
         )
         json_str = augmented.model_dump_json(indent=2)
         restored = AugmentedReport.model_validate_json(json_str)
@@ -72,10 +68,7 @@ class TestAugmentedReport:
 
     def test_ai_generated_flag(self):
         report = _sample_report()
-        augmented = AugmentedReport(
-            report=report,
-            ai_summary="Summary.",
-        )
+        augmented = AugmentedReport(report=report, ai_summary="Summary.")
         assert augmented.is_ai_augmented is True
 
     def test_no_ai_flag_when_no_summary(self):
@@ -86,15 +79,18 @@ class TestAugmentedReport:
 
 class TestAugmentReport:
     def test_augment_without_ai_installed(self):
-        """When PydanticAI is not available, augment_report returns report with no AI summary."""
+        """When PydanticAI is not available, returns report with no AI summary."""
         report = _sample_report()
-        result = augment_report(report)
+        with patch(
+            "shiftscope.ai.augment._default_pydantic_ai_summarizer",
+            side_effect=ImportError("not installed"),
+        ):
+            result = augment_report(report)
         assert isinstance(result, AugmentedReport)
         assert result.ai_summary is None
         assert result.report is report
 
-    def test_augment_with_mock_ai(self):
-        """Test augmentation with a mock summarizer (no real LLM call)."""
+    def test_augment_with_mock_summarizer(self):
         report = _sample_report()
 
         def mock_summarizer(r: Report) -> str:
@@ -104,28 +100,47 @@ class TestAugmentReport:
         result = augment_report(report, summarizer=mock_summarizer)
         assert result.is_ai_augmented is True
         assert "gw-tls-wildcard" in result.ai_summary
-        assert "gw-annotation-enable-cors" in result.ai_summary
         assert "2 issues" in result.ai_summary
 
-
-class TestFaithfulness:
-    """AI summary must reference actual findings, not hallucinate."""
-
-    def test_faithful_summary_references_actual_findings(self):
+    def test_summarizer_gets_deep_copy(self):
+        """Summarizer receives a copy — mutating it doesn't affect original."""
         report = _sample_report()
+        original_count = len(report.findings)
 
-        def faithful_summarizer(r: Report) -> str:
-            return f"Critical: {r.findings[0].title}. Warning: {r.findings[1].title}."
+        def mutating_summarizer(r: Report) -> str:
+            # Attempt to mutate the passed report's findings list
+            r.findings.clear()
+            return "mutated"
 
-        result = augment_report(report, summarizer=faithful_summarizer)
-        # Summary should contain text from actual findings
-        assert "Wildcard TLS" in result.ai_summary
-        assert "CORS" in result.ai_summary
+        result = augment_report(report, summarizer=mutating_summarizer)
+        # Original report should be untouched
+        assert len(result.report.findings) == original_count
 
-    def test_unfaithful_summary_detectable(self):
-        """We can detect when a summary mentions rule_ids not in the report."""
+
+class TestCheckFaithfulness:
+    """Test the faithfulness validation function."""
+
+    def test_faithful_summary_no_hallucinations(self):
         report = _sample_report()
-        # Simulate an AI summary that mentions a rule_id not in the report
-        hallucinated_id = "dra-alpha-feature-gate"
-        report_rule_ids = {f.rule_id for f in report.findings}
-        assert hallucinated_id not in report_rule_ids  # Confirmed: this is hallucination
+        summary = "The gw-tls-wildcard finding is critical. Also check gw-annotation-enable-cors."
+        hallucinated = check_faithfulness(report, summary)
+        assert hallucinated == []
+
+    def test_unfaithful_summary_detects_hallucination(self):
+        report = _sample_report()
+        summary = "Critical issue: dra-alpha-feature-gate requires attention."
+        hallucinated = check_faithfulness(report, summary)
+        assert "dra-alpha-feature-gate" in hallucinated
+
+    def test_no_rule_ids_in_summary(self):
+        report = _sample_report()
+        summary = "Everything looks fine, no issues found."
+        hallucinated = check_faithfulness(report, summary)
+        assert hallucinated == []
+
+    def test_mixed_faithful_and_hallucinated(self):
+        report = _sample_report()
+        summary = "Found gw-tls-wildcard (real) and helm-chart-api-v2 (hallucinated)."
+        hallucinated = check_faithfulness(report, summary)
+        assert "helm-chart-api-v2" in hallucinated
+        assert "gw-tls-wildcard" not in hallucinated

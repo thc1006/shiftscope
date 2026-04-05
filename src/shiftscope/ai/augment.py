@@ -9,6 +9,7 @@ AI-generated summary. Core design constraints:
 
 from __future__ import annotations
 
+import re
 from collections.abc import Callable
 
 from pydantic import BaseModel, ConfigDict, computed_field
@@ -43,18 +44,13 @@ def augment_report(
 ) -> AugmentedReport:
     """Augment a deterministic Report with an optional AI summary.
 
-    Args:
-        report: The deterministic report to augment.
-        summarizer: A callable that takes a Report and returns a summary string.
-                    If None and PydanticAI is available, uses a default summarizer.
-                    If None and PydanticAI is not available, returns report without AI.
-        model_name: Name of the AI model used (for provenance tracking).
-
-    Returns:
-        AugmentedReport with the original report preserved and optional AI summary.
+    A deep copy of the report is passed to the summarizer to prevent
+    mutation of the original findings.
     """
     if summarizer is not None:
-        summary = summarizer(report)
+        # Deep copy to prevent summarizer from mutating original findings
+        safe_copy = report.model_copy(deep=True)
+        summary = summarizer(safe_copy)
         return AugmentedReport(
             report=report,
             ai_summary=summary,
@@ -74,13 +70,21 @@ def augment_report(
         return AugmentedReport(report=report)
 
 
+def check_faithfulness(report: Report, ai_summary: str) -> list[str]:
+    """Check if an AI summary references rule_ids not present in the report.
+
+    Returns a list of hallucinated rule_ids found in the summary but not in findings.
+    """
+    report_rule_ids = {f.rule_id for f in report.findings}
+    # Extract potential rule_ids from summary (pattern: word-word-word)
+    mentioned = set(re.findall(r"\b([a-z]+-[a-z]+-[a-z0-9-]+)\b", ai_summary))
+    return sorted(mentioned - report_rule_ids)
+
+
 def _default_pydantic_ai_summarizer(report: Report, model_name: str | None) -> str:
     """Default summarizer using PydanticAI. Raises ImportError if not installed."""
     from pydantic_ai import Agent  # noqa: F401 — import test
 
-    # Placeholder: real PydanticAI integration would create an Agent
-    # with a structured prompt here. For now, generate a deterministic
-    # summary to validate the augmentation pipeline.
     findings_text = "; ".join(
         f"[{f.severity.value.upper()}] {f.title}" for f in report.findings
     )

@@ -84,3 +84,13 @@ class TestA2AAgentCard:
         assert "protocols" in card
         assert "mcp" in card["protocols"]
         assert "a2a" in card["protocols"]
+
+    def test_card_custom_base_url(self):
+        registry = AnalyzerRegistry()
+        card = build_agent_card(registry, base_url="https://shiftscope.example.com")
+        assert card["url"] == "https://shiftscope.example.com"
+
+    def test_card_default_url(self):
+        registry = AnalyzerRegistry()
+        card = build_agent_card(registry)
+        assert "github.com" in card["url"]

@@ -47,11 +47,15 @@ def build_server_metadata(registry: AnalyzerRegistry) -> dict[str, Any]:
     }
 
 
-def build_agent_card(registry: AnalyzerRegistry) -> dict[str, Any]:
+def build_agent_card(
+    registry: AnalyzerRegistry,
+    base_url: str = "https://github.com/thc1006/shiftscope",
+) -> dict[str, Any]:
     """Build an A2A (Agent-to-Agent) Agent Card.
 
-    The Agent Card advertises ShiftScope as a callable agent
-    for multi-agent orchestration via Google's A2A protocol.
+    Args:
+        registry: AnalyzerRegistry with registered analyzers.
+        base_url: Deployed service URL. Defaults to GitHub repo for dev.
     """
     analyzers = registry.list_all()
 
@@ -64,7 +68,7 @@ def build_agent_card(registry: AnalyzerRegistry) -> dict[str, Any]:
             "matching, and structured findings for Gateway API, DRA, Helm 4, "
             "telco intent, and agent readiness migrations."
         ),
-        "url": "https://github.com/thc1006/shiftscope",
+        "url": base_url,
         "protocols": {
             "mcp": {"spec_version": MCP_SPEC_VERSION},
             "a2a": {"spec_version": A2A_SPEC_VERSION},
