@@ -10,5 +10,5 @@ RUN pip install --no-cache-dir '.[full]'
 RUN useradd --create-home appuser
 USER appuser
 
-ENTRYPOINT [\"shiftscope\"]
-CMD [\"--help\"]
+ENTRYPOINT ["shiftscope"]
+CMD ["--help"]

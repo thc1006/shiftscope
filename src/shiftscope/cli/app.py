@@ -86,7 +86,7 @@ def build_cli(registry: AnalyzerRegistry) -> typer.Typer:
 
         try:
             from shiftscope.mcp.bridge import create_mcp_server
-        except Exception:
+        except ImportError:
             typer.echo(
                 "Error: MCP support requires the 'mcp' extra. "
                 "Install with: pip install shiftscope[mcp]",
