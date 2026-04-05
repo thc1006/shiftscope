@@ -9,6 +9,8 @@ image:
 mode: job
 
 # Job mode settings
+# NOTE: Mount your manifests via a ConfigMap, PVC, or initContainer
+# and set inputPath to the mounted location.
 job:
   analyzer: gateway-api
   inputPath: /manifests/ingress.yaml

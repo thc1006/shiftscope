@@ -8,6 +8,8 @@ metadata:
 spec:
   image: ghcr.io/thc1006/shiftscope:latest
   transport: stdio
+  command: ["shiftscope"]
+  args: ["mcp-serve", "--stdio"]
   permissionProfile:
     type: builtin
     name: network

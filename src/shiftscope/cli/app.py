@@ -80,6 +80,9 @@ def build_cli(registry: AnalyzerRegistry) -> typer.Typer:
         if not stdio and not http:
             typer.echo("Error: specify --stdio or --http transport.", err=True)
             raise typer.Exit(code=1)
+        if stdio and http:
+            typer.echo("Error: --stdio and --http are mutually exclusive.", err=True)
+            raise typer.Exit(code=1)
 
         try:
             from shiftscope.mcp.bridge import create_mcp_server
@@ -91,7 +94,11 @@ def build_cli(registry: AnalyzerRegistry) -> typer.Typer:
             )
             raise typer.Exit(code=1) from None
 
-        mcp = create_mcp_server(registry)
+        try:
+            mcp = create_mcp_server(registry)
+        except Exception as e:
+            typer.echo(f"Error creating MCP server: {e}", err=True)
+            raise typer.Exit(code=1) from None
         if stdio:
             typer.echo("Starting MCP server (stdio)...", err=True)
             mcp.run(transport="stdio")

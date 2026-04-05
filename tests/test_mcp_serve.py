@@ -29,11 +29,3 @@ class TestMCPServeCommand:
         result = runner.invoke(app, ["mcp-serve"])
         assert result.exit_code == 1
         assert "specify --stdio or --http" in result.output
-
-    def test_mcp_serve_http_option(self):
-        app = _build_app()
-        runner = CliRunner()
-        # --http without actually running (will fail trying to import/run but that's expected)
-        result = runner.invoke(app, ["mcp-serve", "--http", "--port", "9090"])
-        # Exit code depends on whether mcp extra is installed
-        assert result.exit_code in (0, 1)

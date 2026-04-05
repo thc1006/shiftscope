@@ -2,12 +2,13 @@ FROM python:3.12-slim AS base
 
 WORKDIR /app
 
-# Install shiftscope with all extras from PyPI
-RUN pip install --no-cache-dir "shiftscope[full]"
+COPY pyproject.toml README.md LICENSE ./
+COPY src/ src/
 
-# Non-root user
+RUN pip install --no-cache-dir '.[full]'
+
 RUN useradd --create-home appuser
 USER appuser
 
-ENTRYPOINT ["shiftscope"]
-CMD ["--help"]
+ENTRYPOINT [\"shiftscope\"]
+CMD [\"--help\"]
