@@ -74,7 +74,9 @@ def build_cli(registry: AnalyzerRegistry) -> typer.Typer:
     def mcp_serve(
         stdio: bool = typer.Option(False, "--stdio", help="Run MCP server via stdio transport"),
         http: bool = typer.Option(False, "--http", help="Run MCP server via HTTP transport"),
-        host: str = typer.Option("127.0.0.1", "--host", help="HTTP bind address (only with --http)"),
+        host: str = typer.Option(
+            "127.0.0.1", "--host", help="HTTP bind address (only with --http)"
+        ),
         port: int = typer.Option(8080, "--port", help="HTTP port (only with --http)"),
     ) -> None:
         """Run ShiftScope as an MCP server for AI agent consumption."""
