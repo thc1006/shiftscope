@@ -1,3 +1,8 @@
+"""Table renderer for ShiftScope reports.
+
+Compact terminal output showing rule_id, severity, and title columns via Rich.
+"""
+
 from __future__ import annotations
 
 from rich.console import Console
@@ -9,6 +14,7 @@ SEVERITY_STYLES = {"critical": "bold red", "warning": "yellow", "info": "green"}
 
 
 def render_table(report: Report) -> str:
+    """Render a Report as a compact Rich table (rule_id, severity, title)."""
     tbl = Table(title=f"{report.analyzer_name} v{report.analyzer_version} \u2014 {report.source}")
     tbl.add_column("Rule ID", style="cyan", no_wrap=True)
     tbl.add_column("Severity", no_wrap=True)

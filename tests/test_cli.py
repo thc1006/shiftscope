@@ -42,6 +42,19 @@ class TestBuildCLI:
         assert "Migration Report" in result.output
         assert "[INFO]" in result.output
 
+    def test_analyze_command_table_output(self, tmp_path, registry_with_stub):
+        app = build_cli(registry_with_stub)
+        input_file = tmp_path / "test.yaml"
+        input_file.write_text("apiVersion: v1\n")
+
+        runner = CliRunner()
+        result = runner.invoke(
+            app, ["analyze", "stub-analyzer", str(input_file), "--output", "table"]
+        )
+        assert result.exit_code == 0
+        assert "stub-analyzer" in result.output
+        assert "always-fire" in result.output
+
     def test_analyze_unknown_analyzer(self):
         registry = AnalyzerRegistry()
         app = build_cli(registry)

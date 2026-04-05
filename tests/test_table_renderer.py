@@ -1,3 +1,5 @@
+"""Tests for Rich table renderer."""
+
 from __future__ import annotations
 
 from shiftscope.core.models import Finding, Report, Severity
