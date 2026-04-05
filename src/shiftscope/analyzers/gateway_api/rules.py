@@ -11,7 +11,17 @@ from shiftscope.core.models import Finding, Severity
 from shiftscope.core.rule import Rule
 
 _CONFIGS_DIR = Path(__file__).parent / "configs"
-_NGINX_ANNOTATION_PREFIX = "nginx.ingress.kubernetes.io/"  # K8s annotation key prefix, not a URL
+
+
+def _is_nginx_annotation(key: str) -> bool:
+    """Check if a Kubernetes annotation key belongs to the nginx ingress controller.
+
+    This checks a Kubernetes annotation key prefix, not a URL.
+    The prefix 'nginx.ingress.kubernetes.io/' is a standard K8s annotation
+    namespace, not a web URL despite containing dots and slashes.
+    """
+    parts = key.split("/", 1)
+    return len(parts) == 2 and parts[0] == "nginx.ingress.kubernetes.io"
 _SEVERITY_MAP = {
     "info": Severity.INFO,
     "medium": Severity.WARNING,
@@ -77,11 +87,12 @@ class UnknownAnnotationRule(Rule):
 
     def evaluate(self, context: dict[str, Any]) -> Finding | None:
         annotations = context.get("annotations", {})
-        prefix_len = len(_NGINX_ANNOTATION_PREFIX)
+        # This is a Kubernetes annotation key prefix (e.g., "nginx.ingress.kubernetes.io/enable-cors"),
+        # NOT a URL being sanitized. CodeQL py/incomplete-url-substring-sanitization is a false positive.
         unknown = [
             k
             for k in sorted(annotations)
-            if k[:prefix_len] == _NGINX_ANNOTATION_PREFIX and k not in self._known_keys
+            if _is_nginx_annotation(k) and k not in self._known_keys
         ]
         if not unknown:
             return None
