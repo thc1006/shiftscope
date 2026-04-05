@@ -63,10 +63,17 @@ spec:
               path: /work/output/critical-count
       container:
         image: "{{inputs.parameters.image}}"
-        command: [bash, -c]
+        command: [sh, -c]
         args:
           - |
-            set -euo pipefail
+            set -eu
+
+            # Validate enable-sarif parameter
+            SARIF="{{inputs.parameters.enable-sarif}}"
+            if [ "${SARIF}" != "true" ] && [ "${SARIF}" != "false" ]; then
+              echo "ERROR: enable-sarif must be 'true' or 'false', got: ${SARIF}"
+              exit 1
+            fi
             pip install -q "shiftscope[cli]=={{inputs.parameters.shiftscope-version}}"
 
             mkdir -p /work/output
