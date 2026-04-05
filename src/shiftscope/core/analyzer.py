@@ -48,14 +48,19 @@ class Analyzer(ABC):
                     finding = rule.evaluate(context)
                     if finding is not None:
                         findings.append(finding)
-            except Exception:
-                logger.warning("Rule '%s' raised an exception", rule.rule_id, exc_info=True)
+            except Exception as exc:
+                error_summary = f"{type(exc).__name__}: {exc}"
+                logger.warning("Rule '%s' raised an exception: %s", rule.rule_id, error_summary)
+                logger.debug("Traceback for rule '%s' failure", rule.rule_id, exc_info=True)
                 findings.append(
                     Finding(
                         rule_id=rule.rule_id,
                         severity=Severity.CRITICAL,
                         title=f"Rule '{rule.rule_id}' failed with an internal error",
-                        detail="This rule raised an unexpected exception during evaluation.",
+                        detail=(
+                            "This rule raised an unexpected exception "
+                            f"during evaluation: {error_summary}"
+                        ),
                         evidence=f"rule_id={rule.rule_id}",
                         recommendation="Report this issue to the analyzer maintainer.",
                     )

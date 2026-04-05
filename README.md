@@ -30,7 +30,7 @@ shiftscope list
 shiftscope analyze gateway-api examples/ingress-nginx/basic.yaml --output markdown
 
 # Analyze a NetworkIntent for DRA migration
-shiftscope analyze dra-network examples/dra-network-examples/dra-network-intent.json --output json
+shiftscope analyze dra-network examples/dra-network-intent.json --output json
 
 # Analyze a Helm chart for v4 readiness
 shiftscope analyze helm4-readiness examples/helm-sample-app/ --output markdown

@@ -41,7 +41,11 @@ def build_cli(registry: AnalyzerRegistry) -> typer.Typer:
         try:
             report = analyzer.analyze(input_path)
         except FileNotFoundError as e:
-            typer.echo(f"Error: {e}", err=True)
+            missing_path = e.filename or input_path
+            typer.echo(
+                f"Error: input file not found: {missing_path}. Check that the path is correct.",
+                err=True,
+            )
             raise typer.Exit(code=1) from None
         except Exception as e:
             typer.echo(f"Error analyzing '{input_path}': {type(e).__name__}: {e}", err=True)

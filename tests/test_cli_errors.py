@@ -23,7 +23,7 @@ class TestCLIErrorHandling:
         runner = CliRunner()
         result = runner.invoke(app, ["analyze", "gateway-api", "/nonexistent/file.yaml"])
         assert result.exit_code == 1
-        assert "Error" in result.output
+        assert "input file not found" in result.output
         assert "Traceback" not in result.output
 
     def test_invalid_yaml_friendly_error(self, tmp_path):
