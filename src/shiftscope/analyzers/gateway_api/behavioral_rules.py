@@ -16,6 +16,12 @@ from shiftscope.core.rule import Rule
 _NGINX_PREFIX = "nginx.ingress.kubernetes.io/"
 
 
+def _ingress_fqn(ig: dict) -> str:
+    """Return namespace/name for unambiguous Ingress identification."""
+    ns = ig.get("namespace", "")
+    return f"{ns}/{ig['name']}" if ns else _ingress_fqn(ig)
+
+
 class RegexPrefixRule(Rule):
     """Behavior #1: Regex in nginx is prefix-based + case-insensitive, GW API is full + case-sensitive."""
 
@@ -65,11 +71,11 @@ class RegexGlobalRule(Rule):
         if len(group) < 2:
             return None
         regex_ingresses = [
-            ig["name"]
+            _ingress_fqn(ig)
             for ig in group
             if ig.get("annotations", {}).get(f"{_NGINX_PREFIX}use-regex") == "true"
         ]
-        non_regex = [ig["name"] for ig in group if ig["name"] not in regex_ingresses]
+        non_regex = [_ingress_fqn(ig) for ig in group if _ingress_fqn(ig) not in regex_ingresses]
         if regex_ingresses and non_regex:
             return Finding(
                 rule_id=self.rule_id,
@@ -100,11 +106,13 @@ class RewriteImpliesRegexRule(Rule):
         if len(group) < 2:
             return None
         rewrite_ingresses = [
-            ig["name"]
+            _ingress_fqn(ig)
             for ig in group
             if f"{_NGINX_PREFIX}rewrite-target" in ig.get("annotations", {})
         ]
-        non_rewrite = [ig["name"] for ig in group if ig["name"] not in rewrite_ingresses]
+        non_rewrite = [
+            _ingress_fqn(ig) for ig in group if _ingress_fqn(ig) not in rewrite_ingresses
+        ]
         if rewrite_ingresses and non_rewrite:
             return Finding(
                 rule_id=self.rule_id,
@@ -282,7 +290,7 @@ class HostMergeRule(Rule):
         group = context.get("host_group", [])
         if len(group) < 2:
             return None
-        names = [ig["name"] for ig in group]
+        names = [_ingress_fqn(ig) for ig in group]
         return Finding(
             rule_id=self.rule_id,
             severity=self.severity,
