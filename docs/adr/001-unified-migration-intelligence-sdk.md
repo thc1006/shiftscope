@@ -381,7 +381,7 @@ Five parallel research tracks were conducted to stress-test this ADR:
 | ADR-001 (cross-validated) | `docs/adr/001-*.md` | — | DONE |
 | pyproject.toml (hatchling + min bounds) | `pyproject.toml` | — | DONE |
 | No-AI-coauthor guard | `.claude/settings.json`, `.git/hooks/commit-msg` | Verified | DONE |
-| **Total: 46 tests passing** | | | |
+| **Total: 186+ tests passing (as of v0.2.0)** | | | |
 
 ### Remaining (Phase 1, Milestone 2)
 

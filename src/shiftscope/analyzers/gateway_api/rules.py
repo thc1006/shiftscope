@@ -92,9 +92,7 @@ class UnknownAnnotationRule(Rule):
         # This is a Kubernetes annotation key prefix (e.g., "nginx.ingress.kubernetes.io/enable-cors"),
         # NOT a URL being sanitized. CodeQL py/incomplete-url-substring-sanitization is a false positive.
         unknown = [
-            k
-            for k in sorted(annotations)
-            if _is_nginx_annotation(k) and k not in self._known_keys
+            k for k in sorted(annotations) if _is_nginx_annotation(k) and k not in self._known_keys
         ]
         if not unknown:
             return None

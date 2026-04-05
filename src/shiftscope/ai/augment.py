@@ -85,9 +85,7 @@ def _default_pydantic_ai_summarizer(report: Report, model_name: str | None) -> s
     """Default summarizer using PydanticAI. Raises ImportError if not installed."""
     from pydantic_ai import Agent  # noqa: F401 — import test
 
-    findings_text = "; ".join(
-        f"[{f.severity.value.upper()}] {f.title}" for f in report.findings
-    )
+    findings_text = "; ".join(f"[{f.severity.value.upper()}] {f.title}" for f in report.findings)
     return (
         f"Migration analysis of {report.source} by {report.analyzer_name}: "
         f"{len(report.findings)} finding(s). {findings_text}"
