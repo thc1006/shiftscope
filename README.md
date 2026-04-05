@@ -61,6 +61,19 @@ Helm 3 → Helm 4 / Charts v3 readiness analysis.
 - .helmignore parity review
 - Values parent/subchart transform detection
 
+### Telco Intent (`telco-intent`)
+Telco YANG → GitOps intent provenance analysis.
+- GitOps target validation (Flux/Nephio K8s version conflict)
+- Provenance review (hydration/IPAM fields need human review)
+- SDC southbound contract-only warning
+
+### Agent Readiness (`agent-readiness`)
+AI agent pilot → production readiness assessment.
+- Tool allowlist compliance (blocks unapproved tools)
+- Token budget enforcement
+- Observability gating (OTEL + trace coverage >= 80%)
+- Weighted promotion gate (security 0.4 + observability 0.35 + economics 0.25)
+
 ## Architecture
 
 ```
@@ -74,13 +87,16 @@ Helm 3 → Helm 4 / Charts v3 readiness analysis.
 │  (applies_to     (run_rules)    (entry_points    │
 │   + evaluate)                    discovery)       │
 │                                                  │
-│  CLI ─────────── MCP Bridge                      │
-│  (Typer,          (FastMCP,                      │
-│   auto-gen)        auto-gen)                     │
+│  CLI ─────────── MCP Bridge ─── AI Augment       │
+│  (Typer,          (FastMCP,      (PydanticAI,    │
+│   auto-gen)        auto-gen)      optional)      │
+│                                                  │
+│  MCP Discovery ── A2A Agent Card                 │
+│  (.well-known)    (capabilities)                 │
 └──────────────────────────────────────────────────┘
-        │              │              │
-   Gateway API    DRA Network    Helm 4
-   Analyzer       Analyzer       Analyzer
+     │          │          │          │          │
+ Gateway    DRA        Helm 4    Telco      Agent
+ API        Network    Readiness Intent     Readiness
 ```
 
 ## Writing a Custom Analyzer
@@ -154,7 +170,7 @@ server.run()  # Exposes analyze_gateway_api, analyze_dra_network, etc.
 git clone https://github.com/thc1006/shiftscope.git
 cd shiftscope
 make bootstrap    # requires uv
-make test         # 186+ tests
+make test         # 193 tests
 make lint         # ruff check
 make verify       # lint + test + compileall
 ```
