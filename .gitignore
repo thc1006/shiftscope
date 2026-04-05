@@ -20,3 +20,4 @@ out/
 artifacts/
 uv.lock
 .hypothesis/
+.claude/
