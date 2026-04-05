@@ -127,5 +127,192 @@ class PromotionGateRule(Rule):
         )
 
 
+# --- v2 Cost Governance Rules (grounded in $47K LangChain incident) ---
+# Design: applies_to() always returns True (agent_name present).
+# Missing keys are treated as "not configured" — the whole point of these rules.
+
+
+def _val_or_missing(context: dict[str, Any], key: str) -> str:
+    """Return the actual value for evidence, or 'missing' if key absent."""
+    if key not in context:
+        return "missing"
+    val = context[key]
+    return str(val) if val is not None else "null"
+
+
+class NoBudgetRule(Rule):
+    """No token budget defined — primary cause of runaway agent costs."""
+
+    rule_id = "agent-cost-no-budget"
+    severity = Severity.CRITICAL
+
+    def applies_to(self, context: dict[str, Any]) -> bool:
+        return "agent_name" in context
+
+    def evaluate(self, context: dict[str, Any]) -> Finding | None:
+        limit = context.get("token_budget_limit")
+        if type(limit) in (int, float) and not isinstance(limit, bool) and limit > 0:
+            return None
+        return Finding(
+            rule_id=self.rule_id,
+            severity=self.severity,
+            title="No token budget defined",
+            detail=(
+                "Without a budget, agent costs are unbounded. "
+                "The $47K LangChain incident ran 11 days with no cost limit."
+            ),
+            evidence=f"agent={context.get('agent_name', '?')}, token_budget_limit={_val_or_missing(context, 'token_budget_limit')}",
+            recommendation="Set a positive token_budget_limit for the agent.",
+        )
+
+
+class NoLoopGuardRule(Rule):
+    """No loop detection or max_iterations configured."""
+
+    rule_id = "agent-cost-no-loop-guard"
+    severity = Severity.CRITICAL
+
+    def applies_to(self, context: dict[str, Any]) -> bool:
+        return "agent_name" in context
+
+    def evaluate(self, context: dict[str, Any]) -> Finding | None:
+        val = context.get("max_iterations")
+        if isinstance(val, int) and val > 0:
+            return None
+        return Finding(
+            rule_id=self.rule_id,
+            severity=self.severity,
+            title="No loop guard (max_iterations) configured",
+            detail=(
+                "Without loop detection, agents can enter infinite conversation loops. "
+                "Two agents ping-ponged for 11 days in the $47K incident."
+            ),
+            evidence=f"agent={context.get('agent_name', '?')}, max_iterations={_val_or_missing(context, 'max_iterations')}",
+            recommendation="Set max_iterations and add loop-detection heuristic for repeated patterns.",
+        )
+
+
+class UnboundedRetryRule(Rule):
+    """No retry policy with backoff and kill-after-N."""
+
+    rule_id = "agent-cost-unbounded-retry"
+    severity = Severity.WARNING
+
+    def applies_to(self, context: dict[str, Any]) -> bool:
+        return "agent_name" in context
+
+    def evaluate(self, context: dict[str, Any]) -> Finding | None:
+        policy = context.get("retry_policy")
+        if isinstance(policy, dict):
+            has_retries = isinstance(policy.get("max_retries"), int) and policy["max_retries"] > 0
+            has_backoff = bool(policy.get("backoff"))
+            if has_retries and has_backoff:
+                return None
+        return Finding(
+            rule_id=self.rule_id,
+            severity=self.severity,
+            title="Retry policy missing or incomplete",
+            detail=(
+                "Without exponential backoff and kill-after-N limits, "
+                "silent retry cascades can triple hourly spend."
+            ),
+            evidence=f"agent={context.get('agent_name', '?')}, retry_policy={_val_or_missing(context, 'retry_policy')}",
+            recommendation="Configure retry_policy with max_retries and exponential backoff.",
+        )
+
+
+class NoKillSwitchRule(Rule):
+    """No termination mechanism configured."""
+
+    rule_id = "agent-governance-no-kill-switch"
+    severity = Severity.CRITICAL
+
+    def applies_to(self, context: dict[str, Any]) -> bool:
+        return "agent_name" in context
+
+    def evaluate(self, context: dict[str, Any]) -> Finding | None:
+        if context.get("kill_switch"):
+            return None
+        return Finding(
+            rule_id=self.rule_id,
+            severity=self.severity,
+            title="No kill switch / termination mechanism",
+            detail=(
+                "Without an emergency stop, runaway agents cannot be terminated. "
+                "OWASP ASI-10 (Rogue Agents) requires termination capability."
+            ),
+            evidence=f"agent={context.get('agent_name', '?')}, kill_switch={_val_or_missing(context, 'kill_switch')}",
+            recommendation="Implement kill switch with immediate effect on all active sessions.",
+        )
+
+
+class NoAuditTrailRule(Rule):
+    """No cost evidence records emitted per action."""
+
+    rule_id = "agent-governance-no-audit-trail"
+    severity = Severity.WARNING
+
+    def applies_to(self, context: dict[str, Any]) -> bool:
+        return "agent_name" in context
+
+    def evaluate(self, context: dict[str, Any]) -> Finding | None:
+        if context.get("cost_evidence_logging"):
+            return None
+        return Finding(
+            rule_id=self.rule_id,
+            severity=self.severity,
+            title="No cost evidence logging",
+            detail=(
+                "Every expensive action should emit an immutable record with "
+                "run_id, agent_id, action, estimated_cost_usd, policy_version."
+            ),
+            evidence=f"agent={context.get('agent_name', '?')}, cost_evidence_logging={_val_or_missing(context, 'cost_evidence_logging')}",
+            recommendation="Enable cost evidence logging with immutable audit records.",
+        )
+
+
+class NoGraduatedResponseRule(Rule):
+    """No 75%/90%/100% budget threshold actions configured."""
+
+    rule_id = "agent-governance-no-graduated-response"
+    severity = Severity.WARNING
+
+    def applies_to(self, context: dict[str, Any]) -> bool:
+        return "agent_name" in context
+
+    _REQUIRED_THRESHOLDS = ("75", "90", "100")
+
+    def evaluate(self, context: dict[str, Any]) -> Finding | None:
+        gr = context.get("graduated_response")
+        if isinstance(gr, dict):
+            has_all = all(gr.get(t) or gr.get(int(t)) for t in self._REQUIRED_THRESHOLDS)
+            if has_all:
+                return None
+        return Finding(
+            rule_id=self.rule_id,
+            severity=self.severity,
+            title="No graduated response thresholds",
+            detail=(
+                "Without graduated response (alert at 75%, downgrade at 90%, stop at 100%), "
+                "budget overruns are only detected after the fact."
+            ),
+            evidence=f"agent={context.get('agent_name', '?')}, graduated_response={_val_or_missing(context, 'graduated_response')}",
+            recommendation="Configure 75%→alert, 90%→downgrade model, 100%→circuit breaker.",
+        )
+
+
 def build_rules() -> list[Rule]:
-    return [ToolAllowlistRule(), TokenBudgetRule(), ObservabilityRule(), PromotionGateRule()]
+    return [
+        # v1 rules
+        ToolAllowlistRule(),
+        TokenBudgetRule(),
+        ObservabilityRule(),
+        PromotionGateRule(),
+        # v2 cost governance rules
+        NoBudgetRule(),
+        NoLoopGuardRule(),
+        UnboundedRetryRule(),
+        NoKillSwitchRule(),
+        NoAuditTrailRule(),
+        NoGraduatedResponseRule(),
+    ]

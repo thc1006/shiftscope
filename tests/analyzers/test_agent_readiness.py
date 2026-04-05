@@ -98,6 +98,11 @@ class TestAgentReadinessAnalyzer:
                     "used_tokens": 10000,
                     "otel_enabled": True,
                     "trace_coverage_ratio": 0.95,
+                    "max_iterations": 100,
+                    "retry_policy": {"max_retries": 3, "backoff": "exponential"},
+                    "kill_switch": True,
+                    "cost_evidence_logging": True,
+                    "graduated_response": {"75": "alert", "90": "throttle", "100": "block"},
                 }
             )
         )
