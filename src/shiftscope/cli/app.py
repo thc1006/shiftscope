@@ -22,7 +22,7 @@ def build_cli(registry: AnalyzerRegistry) -> typer.Typer:
     def analyze(
         analyzer_name: str = typer.Argument(help="Name of the analyzer to run"),
         input_path: str = typer.Argument(help="Path to the input manifest/config"),
-        output: str = typer.Option("json", help="Output format: json or markdown"),
+        output: str = typer.Option("json", help="Output format: json, markdown, or sarif"),
     ) -> None:
         """Run a migration analyzer on an input file."""
         if output not in ("json", "markdown", "sarif"):

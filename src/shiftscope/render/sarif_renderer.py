@@ -36,7 +36,7 @@ def render_sarif(report: Report, indent: int = 2) -> str:
                 "defaultConfiguration": {
                     "level": _SEVERITY_TO_LEVEL.get(finding.severity, "warning"),
                 },
-                "helpUri": "https://github.com/thc1006/shiftscope/blob/main/README.md",
+                "helpUri": f"https://github.com/thc1006/shiftscope/blob/v{__version__}/README.md",
             }
 
     results = []
