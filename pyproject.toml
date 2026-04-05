@@ -59,6 +59,8 @@ shiftscope = "shiftscope.cli.app:main"
 gateway-api = "shiftscope.analyzers.gateway_api:GatewayApiAnalyzer"
 dra-network = "shiftscope.analyzers.dra_network:DRANetworkAnalyzer"
 helm4-readiness = "shiftscope.analyzers.helm4:Helm4ReadinessAnalyzer"
+telco-intent = "shiftscope.analyzers.telco_intent:TelcoIntentAnalyzer"
+agent-readiness = "shiftscope.analyzers.agent_readiness:AgentReadinessAnalyzer"
 
 [project.urls]
 Homepage = "https://shiftscope.dev"
