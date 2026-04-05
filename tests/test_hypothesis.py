@@ -33,7 +33,7 @@ report_st = st.builds(
     analyzer_version=st.just("0.1.0"),
     source=non_empty_text,
     findings=st.lists(finding_st, min_size=0, max_size=10),
-    metadata=st.just({}),
+    metadata=st.builds(dict),
 )
 
 
