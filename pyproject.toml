@@ -65,7 +65,7 @@ agent-readiness = "shiftscope.analyzers.agent_readiness:AgentReadinessAnalyzer"
 [project.urls]
 Homepage = "https://github.com/thc1006/shiftscope"
 Repository = "https://github.com/thc1006/shiftscope"
-Documentation = "https://github.com/thc1006/shiftscope/blob/main/docs/adr/001-unified-migration-intelligence-sdk.md"
+Documentation = "https://github.com/thc1006/shiftscope/blob/v0.2.0/docs/adr/001-unified-migration-intelligence-sdk.md"
 
 [dependency-groups]
 dev = [

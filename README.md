@@ -163,7 +163,8 @@ my-analyzer = "my_package:MyAnalyzer"
 
 ## MCP Integration
 
-ShiftScope exposes all analyzers as MCP tools for AI agent consumption:
+ShiftScope exposes all analyzers as MCP tools for AI agent consumption.
+Requires the MCP extra: `pip install shiftscope[mcp]` (or `shiftscope[full]`).
 
 ```python
 from shiftscope.mcp.bridge import create_mcp_server
