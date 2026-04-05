@@ -23,7 +23,7 @@ spec:
         description: "Path to manifest/config file within the input artifact"
       - name: output-format
         value: "json"
-        description: "Output format: json, markdown, or sarif"
+        description: "Set to sarif to additionally generate SARIF output (JSON and Markdown always generated)"
       - name: fail-on-critical
         value: "true"
         description: "Fail step if critical findings detected"
@@ -87,14 +87,14 @@ spec:
             fi
 
             # Parse counts
-            python3 -c "
-            import json
-            data = json.load(open('/work/output/results.json'))
-            findings = data.get('findings', [])
-            critical = [f for f in findings if f.get('severity') == 'critical']
-            open('/work/output/finding-count', 'w').write(str(len(findings)))
-            open('/work/output/critical-count', 'w').write(str(len(critical)))
-            "
+            python3 <<'PY'
+import json
+data = json.load(open('/work/output/results.json'))
+findings = data.get('findings', [])
+critical = [f for f in findings if f.get('severity') == 'critical']
+open('/work/output/finding-count', 'w').write(str(len(findings)))
+open('/work/output/critical-count', 'w').write(str(len(critical)))
+PY
 
             CRITICAL=$(cat /work/output/critical-count)
             echo "ShiftScope: $(cat /work/output/finding-count) findings (${CRITICAL} critical)"

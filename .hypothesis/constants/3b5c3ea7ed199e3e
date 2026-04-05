@@ -1,0 +1,4 @@
+# file: /home/thc1006/dev/project/shiftscope/src/shiftscope/__init__.py
+# hypothesis_version: 6.151.10
+
+['0.3.1', 'Analyzer', 'AnalyzerRegistry', 'Finding', 'Report', 'Rule', 'Severity']
