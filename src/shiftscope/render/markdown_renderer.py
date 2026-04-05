@@ -30,7 +30,7 @@ def render_markdown(report: Report) -> str:
         lines.append("")
 
         for i, f in enumerate(report.findings, 1):
-            severity_upper = str(f.severity).upper()
+            severity_upper = f.severity.value.upper()
             lines.append(f"### {i}. [{severity_upper}] {f.title}")
             lines.append("")
             lines.append(f"- **Rule:** `{f.rule_id}`")

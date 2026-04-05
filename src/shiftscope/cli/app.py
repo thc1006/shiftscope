@@ -2,15 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
-try:
-    import typer
-except ImportError:
-    raise ImportError(
-        "CLI support requires the 'cli' extra. "
-        "Install with: pip install shiftscope[cli]"
-    )
+import typer
 
 from shiftscope.core.analyzer import AnalyzerRegistry
 from shiftscope.render.json_renderer import render_json
@@ -33,6 +25,10 @@ def build_cli(registry: AnalyzerRegistry) -> typer.Typer:
         output: str = typer.Option("json", help="Output format: json or markdown"),
     ) -> None:
         """Run a migration analyzer on an input file."""
+        if output not in ("json", "markdown"):
+            typer.echo(f"Error: unsupported output format '{output}'. Use 'json' or 'markdown'.", err=True)
+            raise typer.Exit(code=1)
+
         try:
             analyzer = registry.get(analyzer_name)
         except KeyError:

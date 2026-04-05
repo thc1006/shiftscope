@@ -9,7 +9,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any
 
-from shiftscope.core.models import Report
+from shiftscope.core.models import Finding, Report
 from shiftscope.core.rule import Rule
 
 
@@ -32,14 +32,12 @@ class Analyzer(ABC):
     def list_rules(self) -> list[Rule]:
         """Return all rules this analyzer can evaluate."""
 
-    def run_rules(self, context: dict[str, Any]) -> list["Finding"]:
+    def run_rules(self, context: dict[str, Any]) -> list[Finding]:
         """Run all rules with applies_to short-circuit and collect findings.
 
         Shared helper to avoid repeating the applies_to → evaluate loop
         in every analyzer implementation.
         """
-        from shiftscope.core.models import Finding
-
         findings: list[Finding] = []
         for rule in self.list_rules():
             if rule.applies_to(context):

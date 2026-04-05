@@ -6,7 +6,7 @@ Provides structured evaluation: load input → run analyzer → diff against gol
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 from shiftscope.core.analyzer import Analyzer
@@ -40,7 +40,7 @@ class EvalHarness:
     def run_case(self, case: EvalCase) -> EvalResult:
         """Run analyzer on input, compare output against golden file."""
         actual_report = self._analyzer.analyze(case.input_path)
-        actual_json = json.loads(actual_report.model_dump_json(indent=2))
+        actual_json = actual_report.model_dump(mode="json")
 
         golden_path = Path(case.golden_path)
         golden_json = json.loads(golden_path.read_text())

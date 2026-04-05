@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 
-import pytest
+from typer.testing import CliRunner
 
 from shiftscope.cli.app import build_cli
 from shiftscope.core.analyzer import Analyzer, AnalyzerRegistry
@@ -71,7 +71,6 @@ class TestBuildCLI:
         input_file = tmp_path / "test.yaml"
         input_file.write_text("apiVersion: v1\n")
 
-        from typer.testing import CliRunner
         runner = CliRunner()
         result = runner.invoke(app, ["analyze", "cli-stub", str(input_file), "--output", "json"])
         assert result.exit_code == 0
@@ -87,7 +86,6 @@ class TestBuildCLI:
         input_file = tmp_path / "test.yaml"
         input_file.write_text("apiVersion: v1\n")
 
-        from typer.testing import CliRunner
         runner = CliRunner()
         result = runner.invoke(app, ["analyze", "cli-stub", str(input_file), "--output", "markdown"])
         assert result.exit_code == 0
@@ -97,7 +95,6 @@ class TestBuildCLI:
         registry = AnalyzerRegistry()
         app = build_cli(registry)
 
-        from typer.testing import CliRunner
         runner = CliRunner()
         result = runner.invoke(app, ["analyze", "nonexistent", "/tmp/test.yaml"])
         assert result.exit_code != 0
@@ -107,7 +104,6 @@ class TestBuildCLI:
         registry.register(StubCLIAnalyzer())
         app = build_cli(registry)
 
-        from typer.testing import CliRunner
         runner = CliRunner()
         result = runner.invoke(app, ["list"])
         assert result.exit_code == 0

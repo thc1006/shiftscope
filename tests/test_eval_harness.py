@@ -3,10 +3,6 @@
 from __future__ import annotations
 
 import json
-import os
-import tempfile
-
-import pytest
 
 from shiftscope.core.analyzer import Analyzer
 from shiftscope.core.models import Finding, Report, Severity
