@@ -22,12 +22,12 @@ def build_cli(registry: AnalyzerRegistry) -> typer.Typer:
     def analyze(
         analyzer_name: str = typer.Argument(help="Name of the analyzer to run"),
         input_path: str = typer.Argument(help="Path to the input manifest/config"),
-        output: str = typer.Option("json", help="Output format: json or markdown"),
+        output: str = typer.Option("json", help="Output format: json, markdown, or sarif"),
     ) -> None:
         """Run a migration analyzer on an input file."""
-        if output not in ("json", "markdown"):
+        if output not in ("json", "markdown", "sarif"):
             typer.echo(
-                f"Error: unsupported output format '{output}'. Use 'json' or 'markdown'.",
+                f"Error: unsupported output format '{output}'. Use 'json', 'markdown', or 'sarif'.",
                 err=True,
             )
             raise typer.Exit(code=1)
@@ -53,6 +53,10 @@ def build_cli(registry: AnalyzerRegistry) -> typer.Typer:
 
         if output == "markdown":
             typer.echo(render_markdown(report))
+        elif output == "sarif":
+            from shiftscope.render.sarif_renderer import render_sarif
+
+            typer.echo(render_sarif(report))
         else:
             typer.echo(render_json(report))
 

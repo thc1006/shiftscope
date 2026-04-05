@@ -1,0 +1,37 @@
+# Example: Add this to .github/workflows/shiftscope.yml in your repo
+name: ShiftScope Analysis
+
+on:
+  pull_request:
+    paths:
+      - '**.yaml'
+      - '**.yml'
+      - '**.json'
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Run ShiftScope
+        id: shiftscope
+        uses: thc1006/shiftscope/github-action@v1
+        with:
+          analyzer: gateway-api
+          input-path: ./manifests/ingress.yaml
+          output-format: sarif
+          fail-on-critical: 'true'
+          post-pr-comment: 'true'
+
+      - name: Upload SARIF to Code Scanning
+        if: always() && steps.shiftscope.outputs.sarif-file != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ steps.shiftscope.outputs.sarif-file }}
+          category: shiftscope
