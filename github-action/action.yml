@@ -66,7 +66,13 @@ runs:
 
     - name: Install ShiftScope
       shell: bash
-      run: uv pip install --system "shiftscope[cli]${{ inputs.shiftscope-version && format('=={0}', inputs.shiftscope-version) || '' }}"
+      run: |
+        uv venv --python "${{ inputs.python-version }}" "${RUNNER_TEMP}/shiftscope-venv"
+        export VIRTUAL_ENV="${RUNNER_TEMP}/shiftscope-venv"
+        export PATH="${VIRTUAL_ENV}/bin:${PATH}"
+        uv pip install --python "${VIRTUAL_ENV}/bin/python" "shiftscope[cli]${{ inputs.shiftscope-version && format('=={0}', inputs.shiftscope-version) || '' }}"
+        echo "${VIRTUAL_ENV}/bin" >> "${GITHUB_PATH}"
+        echo "VIRTUAL_ENV=${VIRTUAL_ENV}" >> "${GITHUB_ENV}"
 
     - name: Run analysis
       id: analyze
@@ -77,7 +83,7 @@ runs:
         mkdir -p "${RESULTS_DIR}"
 
         # Run analysis ONCE, then render all formats from the Report object
-        uv run python3 << 'PYEOF'
+        "${RUNNER_TEMP}/shiftscope-venv/bin/python3" << 'PYEOF'
         import json, sys, os
         results_dir = os.environ.get("RUNNER_TEMP", "/tmp") + "/shiftscope-results"
 
@@ -144,7 +150,7 @@ runs:
           const fs = require('fs');
           const resultsDir = process.env.RUNNER_TEMP + '/shiftscope-results';
           const markdown = fs.readFileSync(resultsDir + '/results.md', 'utf8');
-          const marker = '<!-- shiftscope-analysis -->';
+          const marker = '<!-- shiftscope-analysis:${{ inputs.analyzer }} -->';
           const body = [
             marker,
             '## ShiftScope Migration Analysis',
