@@ -68,16 +68,18 @@ class TestFindingProperties:
 class TestReportProperties:
     @given(report=report_st)
     @settings(max_examples=30)
-    def test_report_findings_count(self, report: Report):
-        assert len(report.findings) == len(report.model_dump()["findings"])
+    def test_report_findings_count_matches_json(self, report: Report):
+        json_data = json.loads(report.model_dump_json())
+        assert len(json_data["findings"]) == len(report.findings)
+        for i, finding in enumerate(report.findings):
+            assert json_data["findings"][i]["rule_id"] == finding.rule_id
 
     @given(report=report_st)
     @settings(max_examples=30)
     def test_report_json_roundtrip(self, report: Report):
         json_str = report.model_dump_json(indent=2)
         restored = Report.model_validate_json(json_str)
-        assert restored.analyzer_name == report.analyzer_name
-        assert len(restored.findings) == len(report.findings)
+        assert restored == report
 
     @given(report=report_st)
     @settings(max_examples=30)
