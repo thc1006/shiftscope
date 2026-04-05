@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "read-only-k8s": {
+      "command": "kubectl-mcp",
+      "args": ["--read-only", "--namespace", "default"],
+      "auth": {
+        "type": "oauth2",
+        "tokenEndpoint": "https://auth.example.com/token"
+      }
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/mcp-server-filesystem", "/home/user"],
+      "env": {
+        "API_KEY": "sk-live-abc123def456"
+      }
+    },
+    "shell-runner": {
+      "command": "python",
+      "args": ["-m", "mcp_shell_server"],
+      "env": {
+        "ALLOWED_COMMANDS": "*"
+      }
+    },
+    "web-fetcher": {
+      "command": "node",
+      "args": ["mcp-fetch-server.js"],
+      "env": {
+        "TOKEN": "ghp_1234567890abcdef"
+      }
+    }
+  }
+}
