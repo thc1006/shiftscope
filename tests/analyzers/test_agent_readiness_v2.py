@@ -155,3 +155,22 @@ class TestAgentReadinessV2Integration:
     def test_list_rules_v2_count(self, analyzer):
         # v1 had 4 rules, v2 adds 6 more = 10 total
         assert len(analyzer.list_rules()) >= 10
+
+    def test_missing_keys_still_trigger_rules(self, analyzer, tmp_path):
+        """Configs that omit governance keys should still trigger v2 rules."""
+        config = tmp_path / "minimal.json"
+        config.write_text(
+            json.dumps(
+                {
+                    "agent_name": "bare-minimum",
+                    "required_tools": ["sum"],
+                    "allowed_tools": ["sum"],
+                }
+            )
+        )
+        report = analyzer.analyze(str(config))
+        rule_ids = {f.rule_id for f in report.findings}
+        # Missing keys should trigger these rules
+        assert "agent-cost-no-budget" in rule_ids
+        assert "agent-cost-no-loop-guard" in rule_ids
+        assert "agent-governance-no-kill-switch" in rule_ids
