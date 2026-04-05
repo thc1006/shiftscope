@@ -27,6 +27,30 @@ finding_st = st.builds(
     recommendation=non_empty_text,
 )
 
+# Strategy allowing empty strings (for renderer edge cases)
+any_text = st.text(max_size=100, alphabet=st.characters(blacklist_categories=("Cs",)))
+
+finding_with_empties_st = st.builds(
+    Finding,
+    rule_id=st.text(min_size=1, max_size=50, alphabet=st.characters(blacklist_categories=("Cs",))),
+    severity=severity_st,
+    title=any_text,
+    detail=any_text,
+    evidence=any_text,
+    recommendation=any_text,
+)
+
+report_with_empties_st = st.builds(
+    Report,
+    analyzer_name=st.text(
+        min_size=1, max_size=50, alphabet=st.characters(blacklist_categories=("Cs",))
+    ),
+    analyzer_version=st.just("0.1.0"),
+    source=st.text(min_size=1, max_size=50, alphabet=st.characters(blacklist_categories=("Cs",))),
+    findings=st.lists(finding_with_empties_st, min_size=0, max_size=5),
+    metadata=st.builds(dict),
+)
+
 report_st = st.builds(
     Report,
     analyzer_name=non_empty_text,
@@ -128,3 +152,25 @@ class TestRendererProperties:
         parsed = json.loads(render_sarif(report))
         for result in parsed["runs"][0]["results"]:
             assert result["level"] in ("error", "warning", "note")
+
+
+class TestRendererEdgeCases:
+    @given(report=report_with_empties_st)
+    @settings(max_examples=30)
+    def test_json_handles_empty_strings(self, report: Report):
+        output = render_json(report)
+        parsed = json.loads(output)
+        assert isinstance(parsed, dict)
+
+    @given(report=report_with_empties_st)
+    @settings(max_examples=30)
+    def test_markdown_handles_empty_strings(self, report: Report):
+        md = render_markdown(report)
+        assert isinstance(md, str)
+
+    @given(report=report_with_empties_st)
+    @settings(max_examples=30)
+    def test_sarif_handles_empty_strings(self, report: Report):
+        output = render_sarif(report)
+        parsed = json.loads(output)
+        assert parsed["version"] == "2.1.0"
