@@ -91,6 +91,9 @@ class TestA2AAgentCard:
         assert card["url"] == "https://shiftscope.example.com"
 
     def test_card_default_url(self):
+        from urllib.parse import urlparse
+
         registry = AnalyzerRegistry()
         card = build_agent_card(registry)
-        assert "github.com" in card["url"]
+        parsed = urlparse(card["url"])
+        assert parsed.hostname == "github.com"

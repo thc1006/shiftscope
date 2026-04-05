@@ -22,6 +22,8 @@ def _is_nginx_annotation(key: str) -> bool:
     """
     parts = key.split("/", 1)
     return len(parts) == 2 and parts[0] == "nginx.ingress.kubernetes.io"
+
+
 _SEVERITY_MAP = {
     "info": Severity.INFO,
     "medium": Severity.WARNING,
