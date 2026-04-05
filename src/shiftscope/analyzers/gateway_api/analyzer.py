@@ -13,7 +13,7 @@ from shiftscope.analyzers.gateway_api.behavioral_rules import build_behavioral_r
 from shiftscope.analyzers.gateway_api.parser import load_ingresses
 from shiftscope.analyzers.gateway_api.rules import build_rules
 from shiftscope.core.analyzer import Analyzer
-from shiftscope.core.models import Report
+from shiftscope.core.models import Finding, Report, Severity
 from shiftscope.core.rule import Rule
 
 _CROSS_INGRESS_RULE_IDS = frozenset(
@@ -98,14 +98,12 @@ class GatewayApiAnalyzer(Analyzer):
         return list(self._annotation_rules) + list(self._behavioral_rules)
 
     @staticmethod
-    def _run_rule_set(rules: list[Rule], context: dict[str, Any]) -> list:
+    def _run_rule_set(rules: list[Rule], context: dict[str, Any]) -> list[Finding]:
         """Run a specific set of rules with the same resilience as Analyzer.run_rules."""
         import logging
 
-        from shiftscope.core.models import Finding, Severity
-
         logger = logging.getLogger(__name__)
-        findings = []
+        findings: list[Finding] = []
         for rule in rules:
             try:
                 if rule.applies_to(context):
@@ -114,16 +112,19 @@ class GatewayApiAnalyzer(Analyzer):
                         findings.append(finding)
             except Exception as exc:
                 error_summary = f"{type(exc).__name__}: {exc}"
-                logger.warning("Rule '%s' raised: %s", rule.rule_id, error_summary)
-                logger.debug("Rule '%s' traceback", rule.rule_id, exc_info=True)
+                logger.warning("Rule '%s' raised an exception: %s", rule.rule_id, error_summary)
+                logger.debug("Traceback for rule '%s' failure", rule.rule_id, exc_info=True)
                 findings.append(
                     Finding(
                         rule_id=rule.rule_id,
                         severity=Severity.CRITICAL,
-                        title=f"Rule '{rule.rule_id}' failed",
-                        detail=f"Unexpected exception: {error_summary}",
+                        title=f"Rule '{rule.rule_id}' failed with an internal error",
+                        detail=(
+                            "This rule raised an unexpected exception "
+                            f"during evaluation: {error_summary}"
+                        ),
                         evidence=f"rule_id={rule.rule_id}",
-                        recommendation="Report to analyzer maintainer.",
+                        recommendation="Report this issue to the analyzer maintainer.",
                     )
                 )
         return findings
@@ -151,9 +152,11 @@ def _group_by_hostname(ingresses: list[dict[str, Any]]) -> dict[str, list[dict[s
     groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
     seen: dict[str, set[str]] = defaultdict(set)
     for ingress in ingresses:
+        ns = ingress.get("namespace", "")
+        ingress_key = f"{ns}/{ingress['name']}" if ns else ingress["name"]
         for rule in ingress.get("rules", []):
             host = rule.get("host", "")
-            if host and ingress["name"] not in seen[host]:
+            if host and ingress_key not in seen[host]:
                 groups[host].append(ingress)
-                seen[host].add(ingress["name"])
+                seen[host].add(ingress_key)
     return dict(groups)

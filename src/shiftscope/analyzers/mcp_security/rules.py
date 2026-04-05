@@ -17,9 +17,7 @@ _SECRET_PATTERNS = re.compile(
     r"|eyJ[a-zA-Z0-9]|glpat-|Bearer\s)",
     re.IGNORECASE,
 )
-_SECRET_KEY_NAMES = re.compile(
-    r"(api[_-]?key|secret|token|password|pat|credential)", re.IGNORECASE
-)
+_SECRET_KEY_NAMES = re.compile(r"(api[_-]?key|secret|token|password|pat|credential)", re.IGNORECASE)
 _SHELL_COMMANDS = {"mcp_shell_server", "shell_server", "exec_server", "run_command"}
 _DANGEROUS_ARGS = {"--allow-all", "--no-sandbox", "--unsafe", "-y"}
 
@@ -168,7 +166,7 @@ class SupplyChainRule(Rule):
                     "via typosquatting or package hijacking. mcp-remote (558K+ downloads) "
                     "had CVE-2025-6514. [OWASP ASI-04]"
                 ),
-                evidence=f"server={context.get('server_name', '?')}, npx -y without version pin",
+                evidence=f"server={context.get('server_name', '?')}, {context.get('command', '?')} auto-install without version pin",
                 recommendation="Pin specific package versions: e.g., @scope/package@1.2.3",
             )
         return None

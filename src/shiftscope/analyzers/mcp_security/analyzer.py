@@ -32,9 +32,9 @@ class MCPSecurityAnalyzer(Analyzer):
         for server_name, server_config in config["servers"].items():
             context = {
                 "server_name": server_name,
-                "command": server_config.get("command", ""),
-                "args": server_config.get("args", []),
-                "env": server_config.get("env", {}),
+                "command": server_config.get("command") or "",
+                "args": server_config.get("args") or [],
+                "env": server_config.get("env") or {},
                 "auth": server_config.get("auth"),
             }
             all_findings.extend(self.run_rules(context))

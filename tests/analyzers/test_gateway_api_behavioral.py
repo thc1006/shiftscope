@@ -185,40 +185,6 @@ class TestTrailingSlash:
         assert "gw-behavior-trailing-slash" in rule_ids
 
 
-# --- Behavior 6: cross-namespace ---
-
-
-class TestCrossNamespace:
-    def test_cross_namespace_backend(self, analyzer, tmp_path):
-        path = _write_yaml(
-            tmp_path,
-            """\
-            apiVersion: networking.k8s.io/v1
-            kind: Ingress
-            metadata:
-              name: test
-              namespace: frontend
-            spec:
-              rules:
-              - host: app.example.com
-                http:
-                  paths:
-                  - path: /
-                    pathType: Prefix
-                    backend:
-                      service:
-                        name: backend-svc.other-ns
-                        port:
-                          number: 80
-            """,
-        )
-        report = analyzer.analyze(path)
-        # Cross-namespace detection depends on service name containing dots
-        # This is a heuristic — real cross-ns would use backend.service.namespace
-        [f for f in report.findings if f.rule_id == "gw-behavior-cross-namespace"]
-        # May or may not fire depending on detection heuristic — not blocking
-
-
 # --- Behavior 7: snippet no equivalent ---
 
 
@@ -404,9 +370,8 @@ class TestRealWorldBehavioral:
         """The existing basic.yaml should now trigger behavioral rules too."""
         examples = Path(__file__).resolve().parents[2] / "examples" / "ingress-nginx"
         report = analyzer.analyze(str(examples / "basic.yaml"))
-        {f.rule_id for f in report.findings}
-        # basic.yaml has server-snippet annotation → should trigger snippet-no-equiv
-        # (it doesn't have server-snippet but has auth-tls-secret, backend-protocol, etc.)
-        # At minimum, behavioral rules should not break existing functionality
+        rule_ids = {f.rule_id for f in report.findings}
         assert report.analyzer_name == "gateway-api"
-        assert len(report.findings) >= 6  # existing annotation + TLS rules still work
+        assert len(report.findings) >= 6
+        # basic.yaml has one path with Exact type → should trigger path-normalization
+        assert "gw-behavior-path-normalization" in rule_ids

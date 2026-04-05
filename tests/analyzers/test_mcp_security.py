@@ -119,7 +119,7 @@ class TestSupplyChain:
         }
         finding = rule.evaluate(ctx)
         assert finding is not None
-        assert "npx -y" in finding.evidence
+        assert "npx" in finding.evidence
 
     def test_pinned_version_no_finding(self, analyzer):
         rule = next(r for r in analyzer.list_rules() if r.rule_id == "mcp-sec-supply-chain")
