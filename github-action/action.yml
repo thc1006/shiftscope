@@ -67,11 +67,12 @@ runs:
     - name: Install ShiftScope
       shell: bash
       run: |
-        uv venv "${RUNNER_TEMP}/shiftscope-venv"
-        VIRTUAL_ENV="${RUNNER_TEMP}/shiftscope-venv"
+        uv venv --python "${{ inputs.python-version }}" "${RUNNER_TEMP}/shiftscope-venv"
+        export VIRTUAL_ENV="${RUNNER_TEMP}/shiftscope-venv"
         export PATH="${VIRTUAL_ENV}/bin:${PATH}"
-        uv pip install "shiftscope[cli]${{ inputs.shiftscope-version && format('=={0}', inputs.shiftscope-version) || '' }}"
+        uv pip install --python "${VIRTUAL_ENV}/bin/python" "shiftscope[cli]${{ inputs.shiftscope-version && format('=={0}', inputs.shiftscope-version) || '' }}"
         echo "${VIRTUAL_ENV}/bin" >> "${GITHUB_PATH}"
+        echo "VIRTUAL_ENV=${VIRTUAL_ENV}" >> "${GITHUB_ENV}"
 
     - name: Run analysis
       id: analyze
@@ -82,7 +83,7 @@ runs:
         mkdir -p "${RESULTS_DIR}"
 
         # Run analysis ONCE, then render all formats from the Report object
-        python3 << 'PYEOF'
+        "${RUNNER_TEMP}/shiftscope-venv/bin/python3" << 'PYEOF'
         import json, sys, os
         results_dir = os.environ.get("RUNNER_TEMP", "/tmp") + "/shiftscope-results"
 
