@@ -16,12 +16,15 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command:
-            - shiftscope
-            - analyze
-            - {{ .Values.job.analyzer }}
-            - {{ .Values.job.inputPath }}
-            - --output
-            - {{ .Values.job.outputFormat }}
+            - sh
+            - -c
+            - |
+              shiftscope analyze {{ .Values.job.analyzer }} {{ .Values.job.inputPath }} --output {{ .Values.job.outputFormat }} > /tmp/results.json
+              cat /tmp/results.json
+              {{- if .Values.job.failOnCritical }}
+              CRITICAL=$(python3 -c "import json; data=json.load(open('/tmp/results.json')); print(len([f for f in data.get('findings',[]) if f.get('severity')=='critical']))")
+              if [ "$CRITICAL" -gt 0 ]; then echo "CRITICAL findings detected"; exit 1; fi
+              {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       restartPolicy: Never
