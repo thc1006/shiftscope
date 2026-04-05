@@ -149,7 +149,7 @@ class TrailingSlashRule(Rule):
                 "Gateway API does NOT configure any implicit redirects."
             ),
             evidence=f"{context.get('ingress_name', '?')}: paths={affected}",
-            recommendation="Add explicit RequestRedirect rule for each path without trailing slash.",
+            recommendation="Add an explicit RequestRedirect from each path's no-slash form to its trailing-slash form (e.g., '/path' → '/path/').",
         )
 
 

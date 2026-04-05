@@ -220,6 +220,9 @@ class TestGatewayApiAnalyzer:
         assert report.analyzer_name == "gateway-api"
         assert report.source == str(BASIC_YAML)
         # basic.yaml: 3 known annotations + wildcard TLS + frontend mTLS + backend protocol = 6
+        rule_ids = {f.rule_id for f in report.findings}
+        assert "gw-annotation-enable-cors" in rule_ids
+        assert "gw-tls-wildcard" in rule_ids
         assert len(report.findings) >= 6
 
     def test_analyze_finding_rule_ids(self, analyzer):

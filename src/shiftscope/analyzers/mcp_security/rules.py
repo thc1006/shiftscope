@@ -155,7 +155,10 @@ class SupplyChainRule(Rule):
         has_auto_install = "-y" in args or "--yes" in args
         # Check if package has version pin
         pkg_args = [a for a in args if not a.startswith("-")]
-        has_version = any("@" in a and not a.startswith("@") or a.count("@") > 1 for a in pkg_args)
+        has_version = any(
+            ("@" in a and (not a.startswith("@") or a.count("@") > 1)) or "==" in a or ">=" in a
+            for a in pkg_args
+        )
         if has_auto_install and not has_version:
             return Finding(
                 rule_id=self.rule_id,
