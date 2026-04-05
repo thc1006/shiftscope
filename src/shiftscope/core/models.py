@@ -10,6 +10,9 @@ Finding and Report are Pydantic BaseModel (not dataclasses) for:
 from __future__ import annotations
 
 import sys
+from typing import Any
+
+from pydantic import BaseModel, ConfigDict
 
 # StrEnum is native in 3.11+; shim for development on 3.10 systems.
 # pyproject.toml targets >=3.12; remove shim when CI enforces that.
@@ -20,9 +23,6 @@ else:
 
     class StrEnum(str, Enum):  # noqa: UP042
         pass
-from typing import Any
-
-from pydantic import BaseModel, ConfigDict
 
 
 class Severity(StrEnum):
