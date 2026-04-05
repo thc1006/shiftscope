@@ -11,7 +11,12 @@ from shiftscope.core.models import Finding, Severity
 from shiftscope.core.rule import Rule
 
 _CONFIGS_DIR = Path(__file__).parent / "configs"
-_SEVERITY_MAP = {"medium": Severity.WARNING, "high": Severity.WARNING, "critical": Severity.CRITICAL}
+_SEVERITY_MAP = {
+    "info": Severity.INFO,
+    "medium": Severity.WARNING,
+    "high": Severity.WARNING,  # ShiftScope has 3 levels; high maps to warning
+    "critical": Severity.CRITICAL,
+}
 
 
 def _load_annotation_mappings() -> dict[str, dict]:
@@ -38,9 +43,10 @@ class AnnotationRule(Rule):
         return self._annotation_key in context.get("annotations", {})
 
     def evaluate(self, context: dict[str, Any]) -> Finding | None:
-        if not self.applies_to(context):
+        annotations = context.get("annotations", {})
+        if self._annotation_key not in annotations:
             return None
-        value = context["annotations"][self._annotation_key]
+        value = annotations[self._annotation_key]
         ns = context.get("ingress_namespace", "?")
         name = context.get("ingress_name", "?")
         suggested = self._mapping.get("suggested_feature")
@@ -124,11 +130,13 @@ class FrontendMTLSRule(Rule):
         return "nginx.ingress.kubernetes.io/auth-tls-secret" in context.get("annotations", {})
 
     def evaluate(self, context: dict[str, Any]) -> Finding | None:
-        if not self.applies_to(context):
+        annotations = context.get("annotations", {})
+        key = "nginx.ingress.kubernetes.io/auth-tls-secret"
+        if key not in annotations:
             return None
         ns = context.get("ingress_namespace", "?")
         name = context.get("ingress_name", "?")
-        secret = context["annotations"]["nginx.ingress.kubernetes.io/auth-tls-secret"]
+        secret = annotations[key]
         return Finding(
             rule_id=self.rule_id,
             severity=self.severity,
@@ -149,11 +157,13 @@ class BackendProtocolRule(Rule):
         return "nginx.ingress.kubernetes.io/backend-protocol" in context.get("annotations", {})
 
     def evaluate(self, context: dict[str, Any]) -> Finding | None:
-        if not self.applies_to(context):
+        annotations = context.get("annotations", {})
+        key = "nginx.ingress.kubernetes.io/backend-protocol"
+        if key not in annotations:
             return None
         ns = context.get("ingress_namespace", "?")
         name = context.get("ingress_name", "?")
-        proto = context["annotations"]["nginx.ingress.kubernetes.io/backend-protocol"]
+        proto = annotations[key]
         return Finding(
             rule_id=self.rule_id,
             severity=self.severity,
