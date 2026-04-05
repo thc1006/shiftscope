@@ -32,7 +32,7 @@ inputs:
   shiftscope-version:
     description: 'ShiftScope version to install from PyPI'
     required: false
-    default: '0.3.0'
+    default: ''
 
 outputs:
   results-json:
@@ -66,7 +66,7 @@ runs:
 
     - name: Install ShiftScope
       shell: bash
-      run: uv pip install --system "shiftscope[cli]==${{ inputs.shiftscope-version }}"
+      run: uv pip install --system "shiftscope[cli]${{ inputs.shiftscope-version && format('=={0}', inputs.shiftscope-version) || '' }}"
 
     - name: Run analysis
       id: analyze
@@ -76,27 +76,24 @@ runs:
         RESULTS_DIR="${RUNNER_TEMP}/shiftscope-results"
         mkdir -p "${RESULTS_DIR}"
 
-        # JSON output (always, for structured parsing)
+        # Run analysis once, generate all formats from JSON
         shiftscope analyze "${{ inputs.analyzer }}" "${{ inputs.input-path }}" \
           --output json > "${RESULTS_DIR}/results.json"
 
-        # Parse counts
-        FINDING_COUNT=$(python3 -c "
-        import json
+        # Generate markdown + sarif + counts from single JSON run
+        python3 -c "
+        import json, sys
         data = json.load(open('${RESULTS_DIR}/results.json'))
-        print(len(data.get('findings', [])))
-        ")
-        CRITICAL_COUNT=$(python3 -c "
-        import json
-        data = json.load(open('${RESULTS_DIR}/results.json'))
-        print(len([f for f in data.get('findings', []) if f.get('severity') == 'critical']))
-        ")
+        findings = data.get('findings', [])
+        critical = [f for f in findings if f.get('severity') == 'critical']
+        print(f'FINDING_COUNT={len(findings)}')
+        print(f'CRITICAL_COUNT={len(critical)}')
+        " > "${RESULTS_DIR}/counts.env"
+        source "${RESULTS_DIR}/counts.env"
 
-        # Markdown output (for PR comments)
         shiftscope analyze "${{ inputs.analyzer }}" "${{ inputs.input-path }}" \
           --output markdown > "${RESULTS_DIR}/results.md"
 
-        # SARIF output (optional)
         if [ "${{ inputs.output-format }}" = "sarif" ]; then
           shiftscope analyze "${{ inputs.analyzer }}" "${{ inputs.input-path }}" \
             --output sarif > "${RESULTS_DIR}/results.sarif"
