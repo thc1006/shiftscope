@@ -26,32 +26,29 @@ class RegexPrefixRule(Rule):
         return context.get("annotations", {}).get(f"{_NGINX_PREFIX}use-regex") == "true"
 
     def evaluate(self, context: dict[str, Any]) -> Finding | None:
-        paths = context.get("paths", [])
-        for p in paths:
+        problem_paths = []
+        for p in context.get("paths", []):
             path_val = p.get("path", "")
             if not path_val:
                 continue
             has_prefix_suffix = path_val.endswith(".*") or path_val.endswith(".*$")
             has_case_flag = "(?i)" in path_val
             if not has_prefix_suffix or not has_case_flag:
-                issues = []
-                if not has_prefix_suffix:
-                    issues.append("missing '.*' suffix for prefix matching")
-                if not has_case_flag:
-                    issues.append("missing '(?i)' for case-insensitive matching")
-                return Finding(
-                    rule_id=self.rule_id,
-                    severity=self.severity,
-                    title="Regex behavior change: prefix + case-insensitive → full + case-sensitive",
-                    detail=(
-                        "ingress-nginx regex is prefix-based and case-insensitive. "
-                        "Gateway API performs full case-sensitive matching. "
-                        f"Issues: {', '.join(issues)}."
-                    ),
-                    evidence=f"{context.get('ingress_name', '?')}: path={path_val!r}",
-                    recommendation="Add '.*' suffix and '(?i)' flag, or fix paths to exact case.",
-                )
-        return None
+                problem_paths.append(path_val)
+        if not problem_paths:
+            return None
+        return Finding(
+            rule_id=self.rule_id,
+            severity=self.severity,
+            title="Regex behavior change: prefix + case-insensitive → full + case-sensitive",
+            detail=(
+                "ingress-nginx regex is prefix-based and case-insensitive. "
+                "Gateway API performs full case-sensitive matching. "
+                f"{len(problem_paths)} path(s) may break."
+            ),
+            evidence=f"{context.get('ingress_name', '?')}: paths={problem_paths}",
+            recommendation="Add '.*' suffix and '(?i)' flag, or fix paths to exact case.",
+        )
 
 
 class RegexGlobalRule(Rule):
@@ -134,22 +131,26 @@ class TrailingSlashRule(Rule):
         return bool(context.get("paths"))
 
     def evaluate(self, context: dict[str, Any]) -> Finding | None:
-        for p in context.get("paths", []):
-            path_val = p.get("path", "")
-            path_type = p.get("pathType", "")
-            if path_type in ("Exact", "Prefix") and path_val.endswith("/") and path_val != "/":
-                return Finding(
-                    rule_id=self.rule_id,
-                    severity=self.severity,
-                    title="Trailing slash auto-redirect will not exist in Gateway API",
-                    detail=(
-                        "ingress-nginx auto-redirects '/path' → '/path/' with 301. "
-                        "Gateway API does NOT configure any implicit redirects."
-                    ),
-                    evidence=f"{context.get('ingress_name', '?')}: path={path_val!r} pathType={path_type}",
-                    recommendation="Add explicit RequestRedirect rule for the path without trailing slash.",
-                )
-        return None
+        affected = [
+            p["path"]
+            for p in context.get("paths", [])
+            if p.get("pathType") in ("Exact", "Prefix")
+            and p.get("path", "").endswith("/")
+            and p.get("path") != "/"
+        ]
+        if not affected:
+            return None
+        return Finding(
+            rule_id=self.rule_id,
+            severity=self.severity,
+            title="Trailing slash auto-redirect will not exist in Gateway API",
+            detail=(
+                "ingress-nginx auto-redirects '/path' → '/path/' with 301. "
+                "Gateway API does NOT configure any implicit redirects."
+            ),
+            evidence=f"{context.get('ingress_name', '?')}: paths={affected}",
+            recommendation="Add explicit RequestRedirect rule for each path without trailing slash.",
+        )
 
 
 class PathNormalizationRule(Rule):
@@ -159,9 +160,13 @@ class PathNormalizationRule(Rule):
     severity = Severity.INFO
 
     def applies_to(self, context: dict[str, Any]) -> bool:
-        return bool(context.get("paths"))
+        # Only flag when paths exist and this is the first Ingress in the manifest
+        # (emit once per analysis, not per Ingress)
+        return context.get("_is_first_ingress", False) and bool(context.get("paths"))
 
     def evaluate(self, context: dict[str, Any]) -> Finding | None:
+        if not context.get("_is_first_ingress"):
+            return None
         return Finding(
             rule_id=self.rule_id,
             severity=self.severity,
@@ -170,7 +175,7 @@ class PathNormalizationRule(Rule):
                 "ingress-nginx normalizes '.', '..', and '//' in paths. "
                 "Gateway API implementations handle these differently, especially duplicate slashes."
             ),
-            evidence=f"{context.get('ingress_name', '?')}: {len(context.get('paths', []))} path(s)",
+            evidence=f"manifest has {context.get('_total_ingress_count', '?')} Ingress(es) with paths",
             recommendation="Verify target Gateway implementation's path normalization documentation.",
         )
 
@@ -248,7 +253,8 @@ class AffinityRule(Rule):
         return f"{_NGINX_PREFIX}affinity" in context.get("annotations", {})
 
     def evaluate(self, context: dict[str, Any]) -> Finding | None:
-        if f"{_NGINX_PREFIX}affinity" not in context.get("annotations", {}):
+        key = f"{_NGINX_PREFIX}affinity"
+        if key not in context.get("annotations", {}):
             return None
         return Finding(
             rule_id=self.rule_id,
@@ -258,7 +264,7 @@ class AffinityRule(Rule):
                 "ingress-nginx supports cookie-based affinity with 9+ sub-annotations. "
                 "Gateway API support is implementation-dependent (experimental BackendTrafficPolicy)."
             ),
-            evidence=f"{context.get('ingress_name', '?')}: affinity={context['annotations'][f'{_NGINX_PREFIX}affinity']}",
+            evidence=f"{context.get('ingress_name', '?')}: affinity={context.get('annotations', {}).get(key)}",
             recommendation="Verify target implementation supports session affinity before migration.",
         )
 

@@ -64,12 +64,14 @@ class GatewayApiAnalyzer(Analyzer):
         per_ingress_rules = [
             r for r in self._behavioral_rules if r.rule_id not in _CROSS_INGRESS_RULE_IDS
         ]
-        for ingress in ingresses:
+        for idx, ingress in enumerate(ingresses):
             context = {
                 "ingress_name": ingress["name"],
                 "ingress_namespace": ingress["namespace"],
                 "annotations": ingress["annotations"],
                 "paths": _extract_paths(ingress),
+                "_is_first_ingress": idx == 0,
+                "_total_ingress_count": len(ingresses),
             }
             all_findings.extend(self._run_rule_set(per_ingress_rules, context))
 
@@ -95,8 +97,9 @@ class GatewayApiAnalyzer(Analyzer):
     def list_rules(self) -> list[Rule]:
         return list(self._annotation_rules) + list(self._behavioral_rules)
 
-    def _run_rule_set(self, rules: list[Rule], context: dict[str, Any]) -> list:
-        """Run a specific set of rules (uses Analyzer.run_rules pattern)."""
+    @staticmethod
+    def _run_rule_set(rules: list[Rule], context: dict[str, Any]) -> list:
+        """Run a specific set of rules with the same resilience as Analyzer.run_rules."""
         import logging
 
         from shiftscope.core.models import Finding, Severity
@@ -111,16 +114,16 @@ class GatewayApiAnalyzer(Analyzer):
                         findings.append(finding)
             except Exception as exc:
                 error_summary = f"{type(exc).__name__}: {exc}"
-                logger.warning("Rule '%s' raised an exception: %s", rule.rule_id, error_summary)
-                logger.debug("Traceback for rule '%s' failure", rule.rule_id, exc_info=True)
+                logger.warning("Rule '%s' raised: %s", rule.rule_id, error_summary)
+                logger.debug("Rule '%s' traceback", rule.rule_id, exc_info=True)
                 findings.append(
                     Finding(
                         rule_id=rule.rule_id,
                         severity=Severity.CRITICAL,
-                        title=f"Rule '{rule.rule_id}' failed with an internal error",
-                        detail=f"This rule raised an unexpected exception during evaluation: {error_summary}",
+                        title=f"Rule '{rule.rule_id}' failed",
+                        detail=f"Unexpected exception: {error_summary}",
                         evidence=f"rule_id={rule.rule_id}",
-                        recommendation="Report this issue to the analyzer maintainer.",
+                        recommendation="Report to analyzer maintainer.",
                     )
                 )
         return findings
@@ -141,11 +144,16 @@ def _extract_paths(ingress: dict[str, Any]) -> list[dict[str, str]]:
 
 
 def _group_by_hostname(ingresses: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
-    """Group Ingresses by their hostname(s) for cross-Ingress analysis."""
+    """Group Ingresses by their hostname(s) for cross-Ingress analysis.
+
+    Each Ingress appears at most once per hostname group (deduplicated).
+    """
     groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    seen: dict[str, set[str]] = defaultdict(set)
     for ingress in ingresses:
         for rule in ingress.get("rules", []):
             host = rule.get("host", "")
-            if host:
+            if host and ingress["name"] not in seen[host]:
                 groups[host].append(ingress)
+                seen[host].add(ingress["name"])
     return dict(groups)
