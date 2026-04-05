@@ -246,8 +246,9 @@ See [ADR-001](docs/adr/001-unified-migration-intelligence-sdk.md) for the full a
 | 1: Core SDK + Reference Analyzer | Done | Models, Rule/Analyzer ABC, renderers, CLI, MCP bridge, Gateway API analyzer |
 | 2: Multi-Analyzer + CI | Done | DRA + Helm 4 analyzers, GitHub Actions CI, CodeQL |
 | 3: AI + Security | Done | Telco + agent analyzers, PydanticAI, A2A, behavioral detection, MCP security, agent governance v2 |
-| 4: CNCF Sandbox | Planned | Landscape listing, TAG presentation, Sandbox proposal |
-| 5: Ecosystem | Planned | GitHub Action, Argo Workflows, KubeCon NA 2026 |
+| 4: Container + MCP Serve | Done | Dockerfile, Helm chart (job + server modes), MCP stdio/HTTP server, kagent/ToolHive CRDs |
+| 5: CNCF Sandbox | Planned | Landscape listing, TAG presentation, Sandbox proposal |
+| 6: Ecosystem | Planned | KubeCon NA 2026, community outreach |
 
 ## License
 

@@ -34,7 +34,7 @@ _SEVERITY_MAP = {
 
 def _load_annotation_mappings() -> dict[str, dict]:
     with open(_CONFIGS_DIR / "annotation_mappings.yaml", encoding="utf-8") as f:
-        return yaml.safe_load(f)
+        return yaml.safe_load(f) or {}
 
 
 # --- Annotation rules ---

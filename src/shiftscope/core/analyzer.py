@@ -105,7 +105,7 @@ class AnalyzerRegistry:
         for ep in discovered:
             try:
                 analyzer_cls = ep.load()
-                if callable(analyzer_cls):
+                if isinstance(analyzer_cls, type) and issubclass(analyzer_cls, Analyzer):
                     self.register(analyzer_cls())
             except Exception:
                 logger.warning("Failed to load analyzer entry point: %s", ep.name, exc_info=True)

@@ -381,9 +381,9 @@ Five parallel research tracks were conducted to stress-test this ADR:
 | ADR-001 (cross-validated) | `docs/adr/001-*.md` | — | DONE |
 | pyproject.toml (hatchling + min bounds) | `pyproject.toml` | — | DONE |
 | No-AI-coauthor guard | `.claude/settings.json`, `.git/hooks/commit-msg` | Verified | DONE |
-| **Total: 235 tests passing (as of v0.3.0)** | | | |
+| **Total: 269 tests passing (as of v0.3.1)** | | | |
 
-### Completed (Phase 1 M2 + Phase 2 + Phase 3) — as of v0.2.0
+### Completed (Phase 1 M2 + Phase 2 + Phase 3) — as of v0.3.1
 
 All originally "remaining" items have been implemented and shipped:
 
@@ -399,7 +399,7 @@ All originally "remaining" items have been implemented and shipped:
 - MCP Discovery + A2A ✅ — `src/shiftscope/mcp/discovery.py`
 - Plugin Discovery Integration Tests ✅
 - Package Smoke Tests ✅
-- PyPI v0.1.0 + v0.2.0 published ✅
+- PyPI v0.1.0 → v0.3.1 published ✅
 - GitHub Actions CI + CodeQL ✅
 
 ### Remaining (Phase 4+)

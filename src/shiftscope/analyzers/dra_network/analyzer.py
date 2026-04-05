@@ -35,7 +35,7 @@ class DRANetworkAnalyzer(Analyzer):
             analyzer_version=self.version,
             source=input_path,
             findings=findings,
-            metadata={"intent_name": context["name"]},
+            metadata={"intent_name": context.get("name", "unknown")},
         )
 
     def list_rules(self) -> list[Rule]:
