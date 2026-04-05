@@ -28,7 +28,7 @@ spec:
         value: "true"
         description: "Fail step if critical findings detected"
       - name: shiftscope-version
-        value: "0.3.1"
+        value: "0.4.0"
       - name: image
         value: "python:3.12-slim"
         description: "Container image (override with prebuilt image for faster runs)"
