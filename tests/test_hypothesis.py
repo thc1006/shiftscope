@@ -13,7 +13,9 @@ from shiftscope.render.markdown_renderer import render_markdown
 from shiftscope.render.sarif_renderer import render_sarif
 
 severity_st = st.sampled_from(list(Severity))
-non_empty_text = st.text(min_size=1, max_size=100, alphabet=st.characters(blacklist_categories=("Cs",)))
+non_empty_text = st.text(
+    min_size=1, max_size=100, alphabet=st.characters(blacklist_categories=("Cs",))
+)
 
 finding_st = st.builds(
     Finding,
@@ -41,6 +43,7 @@ class TestFindingProperties:
     def test_finding_fields_never_empty(self, finding: Finding):
         assert len(finding.rule_id) > 0
         assert len(finding.title) > 0
+        assert len(finding.detail) > 0
         assert len(finding.evidence) > 0
         assert len(finding.recommendation) > 0
         assert finding.severity in Severity
@@ -55,11 +58,11 @@ class TestFindingProperties:
     @given(finding=finding_st)
     @settings(max_examples=50)
     def test_finding_is_frozen(self, finding: Finding):
-        try:
+        import pytest
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError):
             finding.rule_id = "mutated"
-            raise AssertionError("Should not be mutable")
-        except Exception:
-            pass
 
 
 class TestReportProperties:
@@ -79,11 +82,11 @@ class TestReportProperties:
     @given(report=report_st)
     @settings(max_examples=30)
     def test_report_is_frozen(self, report: Report):
-        try:
+        import pytest
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError):
             report.analyzer_name = "mutated"
-            raise AssertionError("Should not be mutable")
-        except Exception:
-            pass
 
 
 class TestRendererProperties:
