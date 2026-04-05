@@ -14,21 +14,21 @@ SAMPLE_CHART = EXAMPLES_DIR / "helm-sample-app"
 
 @pytest.fixture
 def analyzer():
-    from analyzers.helm4.analyzer import Helm4ReadinessAnalyzer
+    from shiftscope.analyzers.helm4.analyzer import Helm4ReadinessAnalyzer
 
     return Helm4ReadinessAnalyzer()
 
 
 class TestChartParser:
     def test_parse_sample_chart(self):
-        from analyzers.helm4.parser import parse_chart
+        from shiftscope.analyzers.helm4.parser import parse_chart
 
         chart = parse_chart(str(SAMPLE_CHART))
         assert chart["api_version"] == "v2"
         assert chart["name"] == "sample-app"
 
     def test_parse_missing_chart_yaml(self, tmp_path):
-        from analyzers.helm4.parser import parse_chart
+        from shiftscope.analyzers.helm4.parser import parse_chart
 
         with pytest.raises(FileNotFoundError):
             parse_chart(str(tmp_path))

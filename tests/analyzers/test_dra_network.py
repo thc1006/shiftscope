@@ -15,7 +15,7 @@ EXAMPLE_INTENT = EXAMPLES_DIR / "dra-network-intent.json"
 
 @pytest.fixture
 def analyzer():
-    from analyzers.dra_network.analyzer import DRANetworkAnalyzer
+    from shiftscope.analyzers.dra_network.analyzer import DRANetworkAnalyzer
 
     return DRANetworkAnalyzer()
 
@@ -25,7 +25,7 @@ def analyzer():
 
 class TestIntentParser:
     def test_parse_example_intent(self):
-        from analyzers.dra_network.parser import load_intent
+        from shiftscope.analyzers.dra_network.parser import load_intent
 
         intent = load_intent(str(EXAMPLE_INTENT))
         assert intent["name"] == "demo-ai-rdma-job"
@@ -33,7 +33,7 @@ class TestIntentParser:
         assert intent["requires_rdma"] is True
 
     def test_parse_minimal_intent(self, tmp_path):
-        from analyzers.dra_network.parser import load_intent
+        from shiftscope.analyzers.dra_network.parser import load_intent
 
         minimal = tmp_path / "min.json"
         minimal.write_text(json.dumps({"name": "test", "workload_kind": "Job"}))
@@ -43,7 +43,7 @@ class TestIntentParser:
         assert intent["requires_rdma"] is False
 
     def test_parse_invalid_json_raises(self, tmp_path):
-        from analyzers.dra_network.parser import load_intent
+        from shiftscope.analyzers.dra_network.parser import load_intent
 
         bad = tmp_path / "bad.json"
         bad.write_text("not json")

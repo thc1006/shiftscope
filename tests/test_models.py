@@ -1,4 +1,4 @@
-"""Tests for core data models ."""
+"""Tests for core data models."""
 
 from __future__ import annotations
 

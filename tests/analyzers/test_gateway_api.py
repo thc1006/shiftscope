@@ -5,9 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from analyzers.gateway_api.analyzer import GatewayApiAnalyzer
-from analyzers.gateway_api.parser import load_ingresses
 
+from shiftscope.analyzers.gateway_api.analyzer import GatewayApiAnalyzer
+from shiftscope.analyzers.gateway_api.parser import load_ingresses
 from shiftscope.core.models import Report, Severity
 
 EXAMPLES_DIR = Path(__file__).resolve().parents[2] / "examples" / "ingress-nginx"

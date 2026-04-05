@@ -8,9 +8,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from analyzers.dra_network.parser import load_intent
-from analyzers.dra_network.rules import build_rules
-
+from shiftscope.analyzers.dra_network.parser import load_intent
+from shiftscope.analyzers.dra_network.rules import build_rules
 from shiftscope.core.analyzer import Analyzer
 from shiftscope.core.models import Report
 from shiftscope.core.rule import Rule
