@@ -1,0 +1,19 @@
+{{- if and (eq .Values.mode "server") (eq .Values.server.transport "http") }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-mcp
+  labels:
+    app.kubernetes.io/name: shiftscope
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.server.port }}
+      targetPort: {{ .Values.server.port }}
+      protocol: TCP
+      name: mcp-http
+  selector:
+    app.kubernetes.io/name: shiftscope
+    app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}

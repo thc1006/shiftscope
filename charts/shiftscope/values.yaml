@@ -1,0 +1,36 @@
+# ShiftScope Helm Chart values
+
+image:
+  repository: ghcr.io/thc1006/shiftscope
+  tag: "0.3.1"
+  pullPolicy: IfNotPresent
+
+# Mode: "job" for on-demand scan, "server" for MCP server
+mode: job
+
+# Job mode settings
+# NOTE: Mount your manifests via a ConfigMap, PVC, or initContainer
+# and set inputPath to the mounted location.
+job:
+  analyzer: gateway-api
+  inputPath: /manifests/ingress.yaml
+  outputFormat: json
+  failOnCritical: true
+
+# Server mode settings (MCP)
+server:
+  transport: stdio  # stdio or http
+  port: 8080
+  replicas: 1
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+serviceAccount:
+  create: true
+  name: ""

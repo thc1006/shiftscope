@@ -70,6 +70,46 @@ def build_cli(registry: AnalyzerRegistry) -> typer.Typer:
         for a in analyzers:
             typer.echo(f"  {a.name} (v{a.version}) — {a.description}")
 
+    @app.command(name="mcp-serve")
+    def mcp_serve(
+        stdio: bool = typer.Option(False, "--stdio", help="Run MCP server via stdio transport"),
+        http: bool = typer.Option(False, "--http", help="Run MCP server via HTTP transport"),
+        port: int = typer.Option(8080, "--port", help="HTTP port (only with --http)"),
+    ) -> None:
+        """Run ShiftScope as an MCP server for AI agent consumption."""
+        if not stdio and not http:
+            typer.echo("Error: specify --stdio or --http transport.", err=True)
+            raise typer.Exit(code=1)
+        if stdio and http:
+            typer.echo("Error: --stdio and --http are mutually exclusive.", err=True)
+            raise typer.Exit(code=1)
+        if stdio and port != 8080:
+            typer.echo("Warning: --port is ignored in --stdio mode.", err=True)
+        if http and not (1 <= port <= 65535):
+            typer.echo(f"Error: --port must be 1-65535, got {port}.", err=True)
+            raise typer.Exit(code=1)
+
+        from shiftscope.mcp.bridge import MCPBridgeError, create_mcp_server
+
+        try:
+            mcp = create_mcp_server(registry)
+        except MCPBridgeError as e:
+            typer.echo(str(e), err=True)
+            raise typer.Exit(code=1) from None
+        except Exception as e:
+            typer.echo(f"Error creating MCP server: {type(e).__name__}: {e}", err=True)
+            raise typer.Exit(code=1) from None
+        try:
+            if stdio:
+                typer.echo("Starting MCP server (stdio)...", err=True)
+                mcp.run(transport="stdio")
+            else:
+                typer.echo(f"Starting MCP server (http://0.0.0.0:{port})...", err=True)
+                mcp.run(transport="streamable-http", host="0.0.0.0", port=port)
+        except Exception as e:
+            typer.echo(f"MCP server error: {type(e).__name__}: {e}", err=True)
+            raise typer.Exit(code=1) from None
+
     return app
 
 
