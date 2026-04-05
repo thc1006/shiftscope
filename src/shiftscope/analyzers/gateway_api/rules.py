@@ -11,6 +11,7 @@ from shiftscope.core.models import Finding, Severity
 from shiftscope.core.rule import Rule
 
 _CONFIGS_DIR = Path(__file__).parent / "configs"
+_NGINX_ANNOTATION_PREFIX = "nginx.ingress.kubernetes.io/"  # K8s annotation key prefix, not a URL
 _SEVERITY_MAP = {
     "info": Severity.INFO,
     "medium": Severity.WARNING,
@@ -76,10 +77,11 @@ class UnknownAnnotationRule(Rule):
 
     def evaluate(self, context: dict[str, Any]) -> Finding | None:
         annotations = context.get("annotations", {})
+        prefix_len = len(_NGINX_ANNOTATION_PREFIX)
         unknown = [
             k
             for k in sorted(annotations)
-            if k.startswith("nginx.ingress.kubernetes.io/") and k not in self._known_keys
+            if k[:prefix_len] == _NGINX_ANNOTATION_PREFIX and k not in self._known_keys
         ]
         if not unknown:
             return None
