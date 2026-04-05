@@ -1,0 +1,95 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "shiftscope"
+version = "0.1.0"
+description = "Migration intelligence framework for cloud-native infrastructure API transitions"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.12,<3.14"
+authors = [
+    { name = "thc1006" },
+]
+keywords = [
+    "kubernetes",
+    "migration",
+    "cloud-native",
+    "gateway-api",
+    "dra",
+    "helm",
+    "mcp",
+    "infrastructure",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: System :: Systems Administration",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "pydantic>=2.10",
+    "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+cli = [
+    "typer>=0.12",
+    "rich>=13",
+]
+mcp = [
+    "mcp[cli]>=1.20",
+]
+ai = [
+    "pydantic-ai>=1.70",
+]
+full = [
+    "shiftscope[cli,mcp,ai]",
+]
+
+[project.scripts]
+shiftscope = "shiftscope.cli.app:main"
+
+[project.urls]
+Homepage = "https://shiftscope.dev"
+Repository = "https://github.com/thc1006/shiftscope"
+Documentation = "https://shiftscope.dev/docs"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15",
+    "pre-commit>=4.5",
+]
+test = [
+    "pytest>=9",
+    "pytest-cov>=7",
+    "hypothesis>=6.100",
+    "syrupy>=4",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/shiftscope"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["src", "tests", "analyzers"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "SIM", "TCH"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "analyzers"]
+
+[tool.coverage.run]
+source = ["shiftscope"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 90
