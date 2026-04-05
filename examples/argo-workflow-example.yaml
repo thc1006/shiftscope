@@ -40,7 +40,7 @@ spec:
         command: [sh, -c]
         args:
           - |
-            git clone --depth 1 https://github.com/your-org/your-repo.git /work/repo
+            mkdir -p /work && git clone --depth 1 https://github.com/your-org/your-repo.git /work/repo
       outputs:
         artifacts:
           - name: repo
