@@ -80,8 +80,7 @@ class AnalyzerRegistry:
         logger = logging.getLogger(__name__)
         errors: list[str] = []
 
-        eps = entry_points()
-        discovered = eps.get(group, []) if isinstance(eps, dict) else eps.select(group=group)
+        discovered = entry_points(group=group)
         for ep in discovered:
             try:
                 analyzer_cls = ep.load()

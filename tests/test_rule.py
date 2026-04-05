@@ -1,4 +1,4 @@
-"""Tests for Rule ABC — written BEFORE implementation (TDD RED phase)."""
+"""Tests for Rule ABC."""
 
 from __future__ import annotations
 
@@ -27,7 +27,7 @@ class AnnotationCheckRule(Rule):
                 rule_id=self.rule_id,
                 severity=self.severity,
                 title=f"Annotation '{self.target_annotation}' detected",
-                detail=f"This annotation requires manual review during migration.",
+                detail="This annotation requires manual review during migration.",
                 evidence=f"annotations['{self.target_annotation}'] = '{annotations[self.target_annotation]}'",
                 recommendation="Review Gateway API equivalent.",
             )
@@ -66,8 +66,7 @@ class TestRuleABC:
     def test_evaluate_returns_none_when_no_match(self):
         rule = AnnotationCheckRule("nginx.ingress.kubernetes.io/enable-cors")
         ctx = {"annotations": {"other-annotation": "value"}}
-        finding = rule.evaluate(ctx)
-        assert finding is None
+        assert rule.evaluate(ctx) is None
 
     def test_rule_with_parameters(self):
         rule1 = AnnotationCheckRule("annotation-a")
@@ -75,13 +74,29 @@ class TestRuleABC:
         assert rule1.target_annotation != rule2.target_annotation
 
     def test_rule_short_circuit_pattern(self):
-        """Verify the applies_to -> evaluate pattern works correctly."""
         rule = AnnotationCheckRule("nginx.ingress.kubernetes.io/enable-cors")
-        ctx = {"name": "test"}  # no annotations key
-
+        ctx = {"name": "test"}
         if rule.applies_to(ctx):
             finding = rule.evaluate(ctx)
         else:
             finding = None
-
         assert finding is None
+
+    def test_subclass_missing_rule_id_raises(self):
+        """CR-35: __init_subclass__ should catch missing class attributes."""
+        with pytest.raises(TypeError, match="must define class attribute 'rule_id'"):
+            class BadRule(Rule):
+                severity = Severity.INFO
+                def applies_to(self, context: dict) -> bool:
+                    return True
+                def evaluate(self, context: dict) -> Finding | None:
+                    return None
+
+    def test_subclass_missing_severity_raises(self):
+        with pytest.raises(TypeError, match="must define class attribute 'severity'"):
+            class BadRule(Rule):
+                rule_id = "bad"
+                def applies_to(self, context: dict) -> bool:
+                    return True
+                def evaluate(self, context: dict) -> Finding | None:
+                    return None

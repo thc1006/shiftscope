@@ -1,93 +1,62 @@
-"""Tests for MCP bridge — TDD RED phase.
-
-MCP is an optional dependency, so tests verify the bridge construction
-and tool registration logic without requiring a running MCP server.
-"""
+"""Tests for MCP bridge."""
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
-from shiftscope.core.analyzer import Analyzer, AnalyzerRegistry
-from shiftscope.core.models import Finding, Report, Severity
-from shiftscope.core.rule import Rule
-from shiftscope.mcp.bridge import build_mcp_tools, MCPBridgeError
+from shiftscope.core.analyzer import AnalyzerRegistry
+from shiftscope.mcp.bridge import build_mcp_tools
 
-
-# --- Stub analyzer ---
-
-class StubMCPRule(Rule):
-    rule_id = "mcp-test"
-    severity = Severity.INFO
-
-    def applies_to(self, context: dict) -> bool:
-        return True
-
-    def evaluate(self, context: dict) -> Finding | None:
-        return Finding(
-            rule_id=self.rule_id, severity=self.severity,
-            title="MCP test", detail="d", evidence="e", recommendation="r",
-        )
-
-
-class StubMCPAnalyzer(Analyzer):
-    name = "mcp-stub"
-    version = "0.1.0"
-    description = "Stub for MCP testing."
-
-    def __init__(self):
-        self._rules = [StubMCPRule()]
-
-    def analyze(self, input_path: str, **kwargs) -> Report:
-        findings = self.run_rules({"input_path": input_path})
-        return Report(
-            analyzer_name=self.name,
-            analyzer_version=self.version,
-            source=input_path,
-            findings=findings,
-        )
-
-    def list_rules(self) -> list[Rule]:
-        return list(self._rules)
+from tests.stubs import StubAnalyzer
 
 
 class TestBuildMCPTools:
-    def test_build_returns_tool_definitions(self):
-        registry = AnalyzerRegistry()
-        registry.register(StubMCPAnalyzer())
-        tools = build_mcp_tools(registry)
-        assert len(tools) >= 1
+    def test_build_returns_tool_definitions(self, registry_with_stub):
+        tools = build_mcp_tools(registry_with_stub)
+        assert len(tools) == 1
 
-    def test_tool_names_include_analyzer(self):
-        registry = AnalyzerRegistry()
-        registry.register(StubMCPAnalyzer())
-        tools = build_mcp_tools(registry)
-        tool_names = [t["name"] for t in tools]
-        assert any("mcp-stub" in name or "mcp_stub" in name for name in tool_names)
+    def test_tool_names_include_analyzer(self, registry_with_stub):
+        tools = build_mcp_tools(registry_with_stub)
+        assert tools[0]["name"] == "analyze_stub_analyzer"
 
-    def test_tool_has_callable(self):
-        registry = AnalyzerRegistry()
-        registry.register(StubMCPAnalyzer())
-        tools = build_mcp_tools(registry)
+    def test_tool_has_callable(self, registry_with_stub):
+        tools = build_mcp_tools(registry_with_stub)
         for tool in tools:
             assert callable(tool["fn"])
 
-    def test_analyze_tool_produces_json(self, tmp_path):
-        registry = AnalyzerRegistry()
-        registry.register(StubMCPAnalyzer())
-        tools = build_mcp_tools(registry)
+    def test_tool_has_description(self, registry_with_stub):
+        tools = build_mcp_tools(registry_with_stub)
+        assert "stub-analyzer" in tools[0]["description"]
 
+    def test_analyze_tool_produces_valid_json(self, tmp_path, registry_with_stub):
+        tools = build_mcp_tools(registry_with_stub)
         input_file = tmp_path / "test.yaml"
         input_file.write_text("test\n")
 
-        analyze_tool = next(t for t in tools if "analyze" in t["name"])
-        result = analyze_tool["fn"](str(input_file))
+        result = tools[0]["fn"](str(input_file))
         assert isinstance(result, str)
-        import json
         parsed = json.loads(result)
+        assert parsed["analyzer_name"] == "stub-analyzer"
         assert "findings" in parsed
+        assert len(parsed["findings"]) == 1
 
     def test_empty_registry(self):
         registry = AnalyzerRegistry()
         tools = build_mcp_tools(registry)
         assert tools == []
+
+    def test_multiple_analyzers(self):
+        registry = AnalyzerRegistry()
+        a1 = StubAnalyzer()
+        # Create a second stub with different name
+        a2 = StubAnalyzer()
+        a2.name = "second-stub"
+        registry.register(a1)
+        registry.register(a2)
+        tools = build_mcp_tools(registry)
+        assert len(tools) == 2
+        names = {t["name"] for t in tools}
+        assert "analyze_stub_analyzer" in names
+        assert "analyze_second_stub" in names

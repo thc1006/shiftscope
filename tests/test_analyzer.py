@@ -1,68 +1,14 @@
-"""Tests for Analyzer ABC and AnalyzerRegistry — TDD RED phase."""
+"""Tests for Analyzer ABC and AnalyzerRegistry."""
 
 from __future__ import annotations
 
 import pytest
 
 from shiftscope.core.analyzer import Analyzer, AnalyzerRegistry
-from shiftscope.core.models import Finding, Report, Severity
-from shiftscope.core.rule import Rule
+from shiftscope.core.models import Report
 
+from tests.stubs import StubAnalyzer
 
-# --- Test fixtures: concrete implementations for testing ---
-
-class AlwaysFireRule(Rule):
-    rule_id = "always-fire"
-    severity = Severity.INFO
-
-    def applies_to(self, context: dict) -> bool:
-        return True
-
-    def evaluate(self, context: dict) -> Finding | None:
-        return Finding(
-            rule_id=self.rule_id,
-            severity=self.severity,
-            title="Always fires",
-            detail="This rule always produces a finding.",
-            evidence="N/A",
-            recommendation="No action needed.",
-        )
-
-
-class NeverFireRule(Rule):
-    rule_id = "never-fire"
-    severity = Severity.WARNING
-
-    def applies_to(self, context: dict) -> bool:
-        return True
-
-    def evaluate(self, context: dict) -> Finding | None:
-        return None
-
-
-class StubAnalyzer(Analyzer):
-    name = "stub-analyzer"
-    version = "0.1.0"
-    description = "A stub analyzer for testing."
-
-    def __init__(self):
-        self._rules = [AlwaysFireRule(), NeverFireRule()]
-
-    def analyze(self, input_path: str, **kwargs) -> Report:
-        context = {"input_path": input_path, **kwargs}
-        findings = self.run_rules(context)
-        return Report(
-            analyzer_name=self.name,
-            analyzer_version=self.version,
-            source=input_path,
-            findings=findings,
-        )
-
-    def list_rules(self) -> list[Rule]:
-        return list(self._rules)
-
-
-# --- Tests ---
 
 class TestAnalyzerABC:
     def test_cannot_instantiate_abstract_analyzer(self):
@@ -85,7 +31,7 @@ class TestAnalyzerABC:
     def test_analyze_runs_rules(self):
         a = StubAnalyzer()
         report = a.analyze("test.yaml")
-        assert len(report.findings) == 1  # AlwaysFireRule fires, NeverFireRule doesn't
+        assert len(report.findings) == 1
         assert report.findings[0].rule_id == "always-fire"
 
     def test_list_rules(self):
@@ -101,19 +47,15 @@ class TestAnalyzerRegistry:
         registry = AnalyzerRegistry()
         analyzer = StubAnalyzer()
         registry.register(analyzer)
-        retrieved = registry.get("stub-analyzer")
-        assert retrieved is analyzer
+        assert registry.get("stub-analyzer") is analyzer
 
     def test_get_unknown_raises(self):
         registry = AnalyzerRegistry()
         with pytest.raises(KeyError):
             registry.get("nonexistent")
 
-    def test_list_all(self):
-        registry = AnalyzerRegistry()
-        a = StubAnalyzer()
-        registry.register(a)
-        all_analyzers = registry.list_all()
+    def test_list_all(self, registry_with_stub):
+        all_analyzers = registry_with_stub.list_all()
         assert len(all_analyzers) == 1
         assert all_analyzers[0].name == "stub-analyzer"
 
@@ -138,13 +80,11 @@ class TestAnalyzerRegistry:
 
 
 class TestRunRulesHelper:
-    def test_run_rules_collects_findings(self):
-        a = StubAnalyzer()
-        findings = a.run_rules({"input_path": "test.yaml"})
+    def test_run_rules_collects_findings(self, stub_analyzer):
+        findings = stub_analyzer.run_rules({"input_path": "test.yaml"})
         assert len(findings) == 1
         assert findings[0].rule_id == "always-fire"
 
-    def test_run_rules_empty_context(self):
-        a = StubAnalyzer()
-        findings = a.run_rules({})
-        assert len(findings) == 1  # AlwaysFireRule always applies
+    def test_run_rules_empty_context(self, stub_analyzer):
+        findings = stub_analyzer.run_rules({})
+        assert len(findings) == 1

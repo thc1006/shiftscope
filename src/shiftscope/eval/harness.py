@@ -40,7 +40,8 @@ class EvalHarness:
     def run_case(self, case: EvalCase) -> EvalResult:
         """Run analyzer on input, compare output against golden file."""
         actual_report = self._analyzer.analyze(case.input_path)
-        actual_json = actual_report.model_dump(mode="json")
+        # Use same serialization path as update_golden() to avoid silent diffs
+        actual_json = json.loads(actual_report.model_dump_json(indent=2))
 
         golden_path = Path(case.golden_path)
         golden_json = json.loads(golden_path.read_text())
