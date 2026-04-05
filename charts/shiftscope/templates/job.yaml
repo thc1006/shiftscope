@@ -1,0 +1,29 @@
+{{- if eq .Values.mode "job" }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-scan
+  labels:
+    app.kubernetes.io/name: shiftscope
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  ttlSecondsAfterFinished: 3600
+  template:
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      containers:
+        - name: shiftscope
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - shiftscope
+            - analyze
+            - {{ .Values.job.analyzer }}
+            - {{ .Values.job.inputPath }}
+            - --output
+            - {{ .Values.job.outputFormat }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      restartPolicy: Never
+  backoffLimit: 2
+{{- end }}

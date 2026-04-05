@@ -70,6 +70,35 @@ def build_cli(registry: AnalyzerRegistry) -> typer.Typer:
         for a in analyzers:
             typer.echo(f"  {a.name} (v{a.version}) — {a.description}")
 
+    @app.command(name="mcp-serve")
+    def mcp_serve(
+        stdio: bool = typer.Option(False, "--stdio", help="Run MCP server via stdio transport"),
+        http: bool = typer.Option(False, "--http", help="Run MCP server via HTTP transport"),
+        port: int = typer.Option(8080, "--port", help="HTTP port (only with --http)"),
+    ) -> None:
+        """Run ShiftScope as an MCP server for AI agent consumption."""
+        if not stdio and not http:
+            typer.echo("Error: specify --stdio or --http transport.", err=True)
+            raise typer.Exit(code=1)
+
+        try:
+            from shiftscope.mcp.bridge import create_mcp_server
+        except Exception:
+            typer.echo(
+                "Error: MCP support requires the 'mcp' extra. "
+                "Install with: pip install shiftscope[mcp]",
+                err=True,
+            )
+            raise typer.Exit(code=1) from None
+
+        mcp = create_mcp_server(registry)
+        if stdio:
+            typer.echo("Starting MCP server (stdio)...", err=True)
+            mcp.run(transport="stdio")
+        else:
+            typer.echo(f"Starting MCP server (http://0.0.0.0:{port})...", err=True)
+            mcp.run(transport="streamable-http", host="0.0.0.0", port=port)
+
     return app
 
 

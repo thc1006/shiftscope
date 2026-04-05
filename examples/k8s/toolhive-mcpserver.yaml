@@ -1,0 +1,24 @@
+# Register ShiftScope as a ToolHive MCP server
+# Prerequisites: ToolHive operator installed (https://docs.stacklok.com/toolhive)
+apiVersion: toolhive.stacklok.dev/v1alpha1
+kind: MCPServer
+metadata:
+  name: shiftscope
+  namespace: toolhive-system
+spec:
+  image: ghcr.io/thc1006/shiftscope:latest
+  transport: stdio
+  permissionProfile:
+    type: builtin
+    name: network
+  podTemplateSpec:
+    spec:
+      containers:
+        - name: mcp
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

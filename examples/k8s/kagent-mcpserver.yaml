@@ -1,0 +1,15 @@
+# Register ShiftScope as a kagent MCP server
+# Prerequisites: kagent installed (https://kagent.dev)
+apiVersion: kagent.dev/v1alpha1
+kind: MCPServer
+metadata:
+  name: shiftscope
+  namespace: kagent
+spec:
+  deployment:
+    image: ghcr.io/thc1006/shiftscope:latest
+    cmd: shiftscope
+    args:
+      - mcp-serve
+      - --stdio
+  transportType: stdio
