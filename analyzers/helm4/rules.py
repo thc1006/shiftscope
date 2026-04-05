@@ -106,19 +106,41 @@ class ValuesTransformRule(Rule):
     rule_id = "helm-values-transform"
     severity = Severity.INFO
 
+    _TOP_LEVEL_BLOCK_RE = re.compile(r"(?ms)^([A-Za-z0-9_-]+):\s*\n((?:^[ \t]+.*(?:\n|$))*)")
+    _SUBCHART_HINT_RE = re.compile(r"(?m)^[ \t]+(?:enabled|nameOverride|fullnameOverride):")
+
     def applies_to(self, context: dict[str, Any]) -> bool:
         return bool(context.get("values_text"))
 
     def evaluate(self, context: dict[str, Any]) -> Finding | None:
         text = context.get("values_text", "")
-        if not re.search(r"(?m)^[A-Za-z0-9_-]+:\s*$", text):
+        if not text:
             return None
+
+        # Check for explicit global: block (strong signal)
+        if re.search(r"(?m)^global:\s*(?:#.*)?(?:\n|$)", text):
+            evidence = "values.yaml contains a top-level global: block"
+        else:
+            # Check for subchart-style override patterns
+            evidence = None
+            for match in self._TOP_LEVEL_BLOCK_RE.finditer(text):
+                key = match.group(1)
+                body = match.group(2)
+                if self._SUBCHART_HINT_RE.search(body):
+                    evidence = (
+                        f"values.yaml contains a top-level '{key}' block "
+                        "with subchart-style override keys"
+                    )
+                    break
+            if evidence is None:
+                return None
+
         return Finding(
             rule_id=self.rule_id,
             severity=self.severity,
             title="Values may need parent/subchart transform",
             detail="Parent/subchart values transform is a Charts v3 plugin candidate.",
-            evidence="values.yaml contains nested top-level maps",
+            evidence=evidence,
             recommendation="Add to values-transform plugin readiness backlog.",
         )
 

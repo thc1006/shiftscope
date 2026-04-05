@@ -84,17 +84,42 @@ class TestChartRules:
         finding = rule.evaluate(ctx)
         assert finding is not None
 
-    def test_values_transform_candidate(self, analyzer):
+    def test_values_transform_with_global(self, analyzer):
         rule = next(r for r in analyzer.list_rules() if r.rule_id == "helm-values-transform")
         ctx = {
             "api_version": "v2",
             "name": "test",
             "templates_content": "",
             "helmignore": "",
-            "values_text": "subchartOverrides:\n  key: val\n",
+            "values_text": "global:\n  imageRegistry: docker.io\n",
         }
         finding = rule.evaluate(ctx)
         assert finding is not None
+        assert "global" in finding.evidence
+
+    def test_values_transform_with_subchart_override(self, analyzer):
+        rule = next(r for r in analyzer.list_rules() if r.rule_id == "helm-values-transform")
+        ctx = {
+            "api_version": "v2",
+            "name": "test",
+            "templates_content": "",
+            "helmignore": "",
+            "values_text": "redis:\n  enabled: true\n  nameOverride: my-redis\n",
+        }
+        finding = rule.evaluate(ctx)
+        assert finding is not None
+        assert "subchart-style" in finding.evidence
+
+    def test_values_transform_no_match(self, analyzer):
+        rule = next(r for r in analyzer.list_rules() if r.rule_id == "helm-values-transform")
+        ctx = {
+            "api_version": "v2",
+            "name": "test",
+            "templates_content": "",
+            "helmignore": "",
+            "values_text": "image:\n  repository: nginx\n  tag: stable\n",
+        }
+        assert rule.evaluate(ctx) is None
 
 
 class TestHelm4Analyzer:

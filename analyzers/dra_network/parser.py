@@ -22,7 +22,7 @@ def load_intent(path: str | Path) -> dict[str, Any]:
         "require_topology_alignment": bool(data.get("require_topology_alignment", False)),
         "secondary_networks": list(data.get("secondary_networks") or []),
         "preferred_device_class": data.get("preferred_device_class"),
-        "legacy_bridge": bool(data.get("legacy_bridge", True)),
+        "legacy_bridge": bool(data.get("legacy_bridge", False)),
         "alpha": {
             "extended_resource_mapping": bool(alpha_raw.get("extended_resource_mapping", False)),
             "consumable_capacity": bool(alpha_raw.get("consumable_capacity", False)),
