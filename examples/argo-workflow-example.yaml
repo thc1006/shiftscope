@@ -1,0 +1,47 @@
+# Example: Run ShiftScope Gateway API analysis on manifests from a Git repo
+#
+# Submit with:
+#   argo submit examples/argo-workflow-example.yaml
+
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: shiftscope-gateway-
+spec:
+  entrypoint: analyze-manifests
+  templates:
+    - name: analyze-manifests
+      steps:
+        - - name: fetch-manifests
+            template: git-clone
+        - - name: run-shiftscope
+            templateRef:
+              name: shiftscope-analyze
+              template: analyze
+            arguments:
+              parameters:
+                - name: analyzer
+                  value: gateway-api
+                - name: input-path
+                  value: ingress.yaml
+                - name: enable-sarif
+                  value: "false"
+                - name: fail-on-critical
+                  value: "true"
+                - name: shiftscope-version
+                  value: "0.3.1"
+              artifacts:
+                - name: manifests
+                  from: "{{steps.fetch-manifests.outputs.artifacts.repo}}"
+
+    - name: git-clone
+      container:
+        image: alpine/git:v2.47.2
+        command: [sh, -c]
+        args:
+          - |
+            mkdir -p /work && git clone --depth 1 https://github.com/your-org/your-repo.git /work/repo
+      outputs:
+        artifacts:
+          - name: repo
+            path: /work/repo

@@ -202,6 +202,30 @@ Run ShiftScope in your CI/CD pipeline with PR comments and GitHub Code Scanning:
 
 See [`github-action/example-workflow.yml`](github-action/example-workflow.yml) for a complete example with SARIF upload to Code Scanning.
 
+## Argo Workflows
+
+Run ShiftScope as an Argo Workflows pipeline step with conditional gates:
+
+```yaml
+- templateRef:
+    name: shiftscope-analyze
+    template: analyze
+  arguments:
+    parameters:
+      - name: analyzer
+        value: gateway-api
+      - name: input-path
+        value: ingress.yaml
+      - name: fail-on-critical
+        value: "true"
+```
+
+> **Prerequisite:** Apply the WorkflowTemplate first: `kubectl apply -f examples/argo-workflow-template.yaml`
+>
+> Note: The `shiftscope-analyze` template requires a `manifests` input artifact. Wire it from a previous step (e.g., git-clone) as shown in the full example.
+
+See [`examples/argo-workflow-template.yaml`](examples/argo-workflow-template.yaml) for the full WorkflowTemplate and [`examples/argo-workflow-example.yaml`](examples/argo-workflow-example.yaml) for a complete example.
+
 ## Development
 
 ```bash
