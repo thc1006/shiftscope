@@ -1,0 +1,16 @@
+name: "ShiftScope CodeQL Config"
+
+# Paths to exclude from analysis
+paths-ignore:
+  # Test files don't need security scanning
+  - tests/**
+
+# Query filters to suppress known false positives
+query-filters:
+  # py/incomplete-url-substring-sanitization triggers on K8s annotation
+  # prefix matching (nginx.ingress.kubernetes.io/) which is NOT URL
+  # sanitization. Dismissed as false positive on alert #1.
+  - exclude:
+      id: py/incomplete-url-substring-sanitization
+      paths:
+        - src/shiftscope/analyzers/gateway_api/rules.py
