@@ -18,7 +18,7 @@ if sys.version_info >= (3, 11):  # noqa: UP036
 else:
     from enum import Enum
 
-    class StrEnum(str, Enum):
+    class StrEnum(str, Enum):  # noqa: UP042
         pass
 from typing import Any
 
