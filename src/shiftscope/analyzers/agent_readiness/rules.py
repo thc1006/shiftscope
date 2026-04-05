@@ -151,7 +151,7 @@ class NoBudgetRule(Rule):
 
     def evaluate(self, context: dict[str, Any]) -> Finding | None:
         limit = context.get("token_budget_limit")
-        if isinstance(limit, (int, float)) and limit > 0:
+        if type(limit) in (int, float) and not isinstance(limit, bool) and limit > 0:
             return None
         return Finding(
             rule_id=self.rule_id,
@@ -203,12 +203,15 @@ class UnboundedRetryRule(Rule):
 
     def evaluate(self, context: dict[str, Any]) -> Finding | None:
         policy = context.get("retry_policy")
-        if isinstance(policy, dict) and policy.get("max_retries"):
-            return None
+        if isinstance(policy, dict):
+            has_retries = isinstance(policy.get("max_retries"), int) and policy["max_retries"] > 0
+            has_backoff = bool(policy.get("backoff"))
+            if has_retries and has_backoff:
+                return None
         return Finding(
             rule_id=self.rule_id,
             severity=self.severity,
-            title="No retry policy configured",
+            title="Retry policy missing or incomplete",
             detail=(
                 "Without exponential backoff and kill-after-N limits, "
                 "silent retry cascades can triple hourly spend."
@@ -277,9 +280,14 @@ class NoGraduatedResponseRule(Rule):
     def applies_to(self, context: dict[str, Any]) -> bool:
         return "agent_name" in context
 
+    _REQUIRED_THRESHOLDS = ("75", "90", "100")
+
     def evaluate(self, context: dict[str, Any]) -> Finding | None:
-        if context.get("graduated_response"):
-            return None
+        gr = context.get("graduated_response")
+        if isinstance(gr, dict):
+            has_all = all(gr.get(t) or gr.get(int(t)) for t in self._REQUIRED_THRESHOLDS)
+            if has_all:
+                return None
         return Finding(
             rule_id=self.rule_id,
             severity=self.severity,
