@@ -95,7 +95,10 @@ def build_cli(registry: AnalyzerRegistry) -> typer.Typer:
         from shiftscope.mcp.bridge import MCPBridgeError, create_mcp_server
 
         try:
-            mcp = create_mcp_server(registry, host=host, port=port)
+            if stdio:
+                mcp = create_mcp_server(registry)
+            else:
+                mcp = create_mcp_server(registry, host=host, port=port)
         except MCPBridgeError as e:
             typer.echo(str(e), err=True)
             raise typer.Exit(code=1) from None

@@ -43,6 +43,8 @@ class TestMCPServeCommand:
             result = runner.invoke(_build_app(), ["mcp-serve", "--stdio"])
             assert result.exit_code == 0
             mock_create.assert_called_once()
+            # stdio mode should NOT pass host/port
+            assert "host" not in (mock_create.call_args[1] or {})
             mock_mcp.run.assert_called_once_with(transport="stdio")
 
     def test_http_calls_mcp_run_with_port(self):

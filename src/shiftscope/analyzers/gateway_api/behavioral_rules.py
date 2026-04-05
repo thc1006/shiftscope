@@ -143,7 +143,8 @@ class TrailingSlashRule(Rule):
             p["path"]
             for p in context.get("paths", [])
             if p.get("pathType") in ("Exact", "Prefix")
-            and not p.get("path", "/").endswith("/")
+            and (p.get("path") or "/") != "/"
+            and not (p.get("path") or "/").endswith("/")
         ]
         if not affected:
             return None

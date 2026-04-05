@@ -181,7 +181,7 @@ from shiftscope.core.analyzer import AnalyzerRegistry
 
 registry = AnalyzerRegistry()
 registry.discover()
-mcp = create_mcp_server(registry)  # host/port via kwargs
+mcp = create_mcp_server(registry)
 mcp.run()  # Exposes analyze_gateway_api, analyze_dra_network, etc.
 ```
 
