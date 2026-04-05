@@ -1,0 +1,8 @@
+image:
+  repository: nginx
+  tag: stable
+service:
+  type: ClusterIP
+  port: 80
+subchartOverrides:
+  enabled: true
