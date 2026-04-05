@@ -48,7 +48,11 @@ report_with_empties_st = st.builds(
     analyzer_version=st.just("0.1.0"),
     source=st.text(min_size=1, max_size=50, alphabet=st.characters(blacklist_categories=("Cs",))),
     findings=st.lists(finding_with_empties_st, min_size=0, max_size=5),
-    metadata=st.builds(dict),
+    metadata=st.dictionaries(
+        st.text(min_size=1, max_size=10, alphabet=st.characters(whitelist_categories=("L",))),
+        st.text(max_size=20),
+        max_size=3,
+    ),
 )
 
 report_st = st.builds(
@@ -57,7 +61,11 @@ report_st = st.builds(
     analyzer_version=st.just("0.1.0"),
     source=non_empty_text,
     findings=st.lists(finding_st, min_size=0, max_size=10),
-    metadata=st.builds(dict),
+    metadata=st.dictionaries(
+        st.text(min_size=1, max_size=10, alphabet=st.characters(whitelist_categories=("L",))),
+        st.text(max_size=20),
+        max_size=3,
+    ),
 )
 
 
