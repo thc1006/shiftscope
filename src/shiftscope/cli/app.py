@@ -7,6 +7,7 @@ import typer
 from shiftscope.core.analyzer import AnalyzerRegistry
 from shiftscope.render.json_renderer import render_json
 from shiftscope.render.markdown_renderer import render_markdown
+from shiftscope.render.table_renderer import render_table
 
 
 def build_cli(registry: AnalyzerRegistry) -> typer.Typer:
@@ -22,12 +23,13 @@ def build_cli(registry: AnalyzerRegistry) -> typer.Typer:
     def analyze(
         analyzer_name: str = typer.Argument(help="Name of the analyzer to run"),
         input_path: str = typer.Argument(help="Path to the input manifest/config"),
-        output: str = typer.Option("json", help="Output format: json, markdown, or sarif"),
+        output: str = typer.Option("json", help="Output format: json, markdown, sarif, or table"),
     ) -> None:
         """Run a migration analyzer on an input file."""
-        if output not in ("json", "markdown", "sarif"):
+        if output not in ("json", "markdown", "sarif", "table"):
             typer.echo(
-                f"Error: unsupported output format '{output}'. Use 'json', 'markdown', or 'sarif'.",
+                f"Error: unsupported output format '{output}'."
+                " Use 'json', 'markdown', 'sarif', or 'table'.",
                 err=True,
             )
             raise typer.Exit(code=1)
@@ -57,6 +59,8 @@ def build_cli(registry: AnalyzerRegistry) -> typer.Typer:
             from shiftscope.render.sarif_renderer import render_sarif
 
             typer.echo(render_sarif(report))
+        elif output == "table":
+            typer.echo(render_table(report))
         else:
             typer.echo(render_json(report))
 
