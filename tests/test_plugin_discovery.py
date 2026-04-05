@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from shiftscope.core.analyzer import AnalyzerRegistry
 from shiftscope.core.models import Report
 from tests.stubs import StubAnalyzer
@@ -41,6 +39,7 @@ class TestEntryPointDiscovery:
 
     def test_discover_handles_constructor_error(self):
         """If an analyzer class __init__ raises, it should be caught."""
+
         def bad_constructor():
             raise TypeError("required arg missing")
 

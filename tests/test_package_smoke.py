@@ -2,11 +2,6 @@
 
 from __future__ import annotations
 
-import subprocess
-import sys
-
-import pytest
-
 
 class TestPackageImports:
     """Verify all public API imports work."""
@@ -64,12 +59,12 @@ class TestRegistryDiscovery:
     """Verify all 5 analyzers are discoverable via entry points after install."""
 
     def test_manual_registration_all_five(self):
-        from shiftscope.core.analyzer import AnalyzerRegistry
         from shiftscope.analyzers.agent_readiness import AgentReadinessAnalyzer
         from shiftscope.analyzers.dra_network import DRANetworkAnalyzer
         from shiftscope.analyzers.gateway_api import GatewayApiAnalyzer
         from shiftscope.analyzers.helm4 import Helm4ReadinessAnalyzer
         from shiftscope.analyzers.telco_intent import TelcoIntentAnalyzer
+        from shiftscope.core.analyzer import AnalyzerRegistry
 
         registry = AnalyzerRegistry()
         for cls in [
@@ -83,7 +78,13 @@ class TestRegistryDiscovery:
 
         assert len(registry.list_all()) == 5
         names = {a.name for a in registry.list_all()}
-        assert names == {"gateway-api", "dra-network", "helm4-readiness", "telco-intent", "agent-readiness"}
+        assert names == {
+            "gateway-api",
+            "dra-network",
+            "helm4-readiness",
+            "telco-intent",
+            "agent-readiness",
+        }
 
     def test_each_analyzer_has_rules(self):
         from shiftscope.analyzers.agent_readiness import AgentReadinessAnalyzer
@@ -114,10 +115,11 @@ class TestCLISmoke:
         assert callable(main)
 
     def test_cli_list_command(self):
+        from typer.testing import CliRunner
+
+        from shiftscope.analyzers.gateway_api import GatewayApiAnalyzer
         from shiftscope.cli.app import build_cli
         from shiftscope.core.analyzer import AnalyzerRegistry
-        from shiftscope.analyzers.gateway_api import GatewayApiAnalyzer
-        from typer.testing import CliRunner
 
         registry = AnalyzerRegistry()
         registry.register(GatewayApiAnalyzer())
