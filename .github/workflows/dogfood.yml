@@ -11,6 +11,8 @@ permissions:
 
 jobs:
   analyze:
+    # Skip fork PRs — they can modify ./github-action and run arbitrary code
+    if: github.event_name == 'push' || !github.event.pull_request.head.repo.fork
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -33,13 +35,18 @@ jobs:
           input-path: ${{ matrix.input-path }}
           output-format: markdown
           fail-on-critical: 'false'
-          post-pr-comment: ${{ github.event_name == 'pull_request' && 'true' || 'false' }}
+          post-pr-comment: ${{ github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork && 'true' || 'false' }}
 
       - name: Verify findings detected
         shell: bash
         run: |
           COUNT="${{ steps.shiftscope.outputs.finding-count }}"
+          COUNT="${COUNT:-0}"
           echo "Findings: ${COUNT}"
+          if ! [[ "${COUNT}" =~ ^[0-9]+$ ]]; then
+            echo "::error::finding-count output is not a number: '${COUNT}'"
+            exit 1
+          fi
           if [ "${COUNT}" -eq 0 ]; then
             echo "::error::Expected findings from ${{ matrix.analyzer }} on ${{ matrix.input-path }} but got 0"
             exit 1
