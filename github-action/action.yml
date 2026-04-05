@@ -144,7 +144,7 @@ runs:
           const fs = require('fs');
           const resultsDir = process.env.RUNNER_TEMP + '/shiftscope-results';
           const markdown = fs.readFileSync(resultsDir + '/results.md', 'utf8');
-          const marker = '<!-- shiftscope-analysis -->';
+          const marker = '<!-- shiftscope-analysis:${{ inputs.analyzer }} -->';
           const body = [
             marker,
             '## ShiftScope Migration Analysis',

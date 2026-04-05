@@ -1,0 +1,46 @@
+name: Dogfood ShiftScope Action
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - analyzer: gateway-api
+            input-path: examples/ingress-nginx/basic.yaml
+          - analyzer: mcp-security
+            input-path: examples/mcp-config-insecure.json
+          - analyzer: agent-readiness
+            input-path: examples/agent-config-ungoverned.json
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Run ShiftScope
+        id: shiftscope
+        uses: ./github-action
+        with:
+          analyzer: ${{ matrix.analyzer }}
+          input-path: ${{ matrix.input-path }}
+          output-format: markdown
+          fail-on-critical: 'false'
+          post-pr-comment: ${{ github.event_name == 'pull_request' && 'true' || 'false' }}
+
+      - name: Verify findings detected
+        shell: bash
+        run: |
+          COUNT="${{ steps.shiftscope.outputs.finding-count }}"
+          echo "Findings: ${COUNT}"
+          if [ "${COUNT}" -eq 0 ]; then
+            echo "::error::Expected findings from ${{ matrix.analyzer }} on ${{ matrix.input-path }} but got 0"
+            exit 1
+          fi
