@@ -1,4 +1,4 @@
-"""Tests for DRA networking analyzer — TDD RED phase."""
+"""Tests for the DRA networking analyzer."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Tests for Helm 4 readiness analyzer — TDD RED phase."""
+"""Tests for Helm 4 readiness analyzer."""
 
 from __future__ import annotations
 

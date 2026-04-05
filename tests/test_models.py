@@ -1,4 +1,4 @@
-"""Tests for core data models — written BEFORE implementation (TDD RED phase)."""
+"""Tests for core data models ."""
 
 from __future__ import annotations
 

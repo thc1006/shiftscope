@@ -1,4 +1,4 @@
-"""Tests for JSON and Markdown renderers — TDD RED phase."""
+"""Tests for JSON and Markdown renderers ."""
 
 from __future__ import annotations
 
