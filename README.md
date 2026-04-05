@@ -78,9 +78,18 @@ Telco YANG → GitOps intent provenance analysis.
 ### Agent Readiness (`agent-readiness`)
 AI agent pilot → production readiness assessment.
 - Tool allowlist compliance (blocks unapproved tools)
-- Token budget enforcement
+- Token budget enforcement + cost governance (no-budget, no-loop-guard, unbounded-retry)
 - Observability gating (OTEL + trace coverage >= 80%)
 - Weighted promotion gate (security 0.4 + observability 0.35 + economics 0.25)
+- Kill switch, audit trail, and graduated response (75%/90%/100%) checks
+
+### MCP Security (`mcp-security`)
+MCP server configuration security scanning (OWASP ASI mapped).
+- Static credentials detection (plaintext API keys/tokens in env vars)
+- Missing authentication (CVE-2026-32211 pattern)
+- Command injection risk (shell-executing MCP servers)
+- Over-permission (wildcard permissions, unsafe flags)
+- Supply chain (unpinned npx/uvx/pipx packages)
 
 ## Architecture
 
@@ -102,9 +111,9 @@ AI agent pilot → production readiness assessment.
 │  MCP Discovery ── A2A Agent Card                 │
 │  (.well-known)    (capabilities)                 │
 └──────────────────────────────────────────────────┘
-     │          │          │          │          │
- Gateway    DRA        Helm 4    Telco      Agent
- API        Network    Readiness Intent     Readiness
+     │          │          │          │          │        │
+ Gateway    DRA        Helm 4    Telco      Agent    MCP
+ API        Network    Readiness Intent     Readiness Security
 ```
 
 ## Writing a Custom Analyzer
@@ -195,7 +204,7 @@ See [ADR-001](docs/adr/001-unified-migration-intelligence-sdk.md) for the full a
 |-------|--------|-------|
 | 1: Core SDK + Reference Analyzer | Done | Models, Rule/Analyzer ABC, renderers, CLI, MCP bridge, Gateway API analyzer |
 | 2: Multi-Analyzer + CI | Done | DRA + Helm 4 analyzers, GitHub Actions CI, CodeQL |
-| 3: AI Augmentation | Done | Telco + agent readiness analyzers, PydanticAI, A2A |
+| 3: AI + Security | Done | Telco + agent analyzers, PydanticAI, A2A, behavioral detection, MCP security, agent governance v2 |
 | 4: CNCF Sandbox | Planned | Landscape listing, TAG presentation, Sandbox proposal |
 | 5: Ecosystem | Planned | GitHub Action, Argo Workflows, KubeCon NA 2026 |
 

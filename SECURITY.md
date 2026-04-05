@@ -14,6 +14,7 @@ We will acknowledge receipt within 48 hours and provide a detailed response with
 
 | Version | Supported |
 |---------|-----------|
+| 0.3.x   | Yes       |
 | 0.2.x   | Yes       |
 | 0.1.x   | Yes       |
 
