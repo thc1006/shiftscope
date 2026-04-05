@@ -40,14 +40,16 @@ class TestMCPServeCommand:
         mock_mcp = MagicMock()
         with patch("shiftscope.mcp.bridge.create_mcp_server", return_value=mock_mcp):
             runner = CliRunner()
-            runner.invoke(_build_app(), ["mcp-serve", "--stdio"])
+            result = runner.invoke(_build_app(), ["mcp-serve", "--stdio"])
+            assert result.exit_code == 0
             mock_mcp.run.assert_called_once_with(transport="stdio")
 
     def test_http_calls_mcp_run_with_port(self):
         mock_mcp = MagicMock()
         with patch("shiftscope.mcp.bridge.create_mcp_server", return_value=mock_mcp):
             runner = CliRunner()
-            runner.invoke(_build_app(), ["mcp-serve", "--http", "--port", "9090"])
+            result = runner.invoke(_build_app(), ["mcp-serve", "--http", "--port", "9090"])
+            assert result.exit_code == 0
             mock_mcp.run.assert_called_once_with(
                 transport="streamable-http", host="0.0.0.0", port=9090
             )
