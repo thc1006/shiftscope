@@ -33,4 +33,4 @@ resources:
 
 serviceAccount:
   create: true
-  name: shiftscope
+  name: ""

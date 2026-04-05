@@ -10,7 +10,7 @@ spec:
   ttlSecondsAfterFinished: 3600
   template:
     spec:
-      serviceAccountName: {{ .Values.serviceAccount.name }}
+      serviceAccountName: {{ .Values.serviceAccount.name | default (printf "%s-shiftscope" .Release.Name) }}
       containers:
         - name: shiftscope
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"

@@ -85,6 +85,9 @@ def build_cli(registry: AnalyzerRegistry) -> typer.Typer:
             raise typer.Exit(code=1)
         if stdio and port != 8080:
             typer.echo("Warning: --port is ignored in --stdio mode.", err=True)
+        if http and not (1 <= port <= 65535):
+            typer.echo(f"Error: --port must be 1-65535, got {port}.", err=True)
+            raise typer.Exit(code=1)
 
         from shiftscope.mcp.bridge import MCPBridgeError, create_mcp_server
 
@@ -96,12 +99,16 @@ def build_cli(registry: AnalyzerRegistry) -> typer.Typer:
         except Exception as e:
             typer.echo(f"Error creating MCP server: {type(e).__name__}: {e}", err=True)
             raise typer.Exit(code=1) from None
-        if stdio:
-            typer.echo("Starting MCP server (stdio)...", err=True)
-            mcp.run(transport="stdio")
-        else:
-            typer.echo(f"Starting MCP server (http://0.0.0.0:{port})...", err=True)
-            mcp.run(transport="streamable-http", host="0.0.0.0", port=port)
+        try:
+            if stdio:
+                typer.echo("Starting MCP server (stdio)...", err=True)
+                mcp.run(transport="stdio")
+            else:
+                typer.echo(f"Starting MCP server (http://0.0.0.0:{port})...", err=True)
+                mcp.run(transport="streamable-http", host="0.0.0.0", port=port)
+        except Exception as e:
+            typer.echo(f"MCP server error: {type(e).__name__}: {e}", err=True)
+            raise typer.Exit(code=1) from None
 
     return app
 

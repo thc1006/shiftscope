@@ -18,7 +18,7 @@ spec:
         app.kubernetes.io/name: shiftscope
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
-      serviceAccountName: {{ .Values.serviceAccount.name }}
+      serviceAccountName: {{ .Values.serviceAccount.name | default (printf "%s-shiftscope" .Release.Name) }}
       containers:
         - name: shiftscope
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
