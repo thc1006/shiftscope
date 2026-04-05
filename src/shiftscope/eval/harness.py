@@ -10,7 +10,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from shiftscope.core.analyzer import Analyzer
-from shiftscope.core.models import Report
 
 
 @dataclass

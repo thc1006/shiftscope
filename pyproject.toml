@@ -55,6 +55,11 @@ full = [
 [project.scripts]
 shiftscope = "shiftscope.cli.app:main"
 
+[project.entry-points."shiftscope.analyzers"]
+gateway-api = "shiftscope.analyzers.gateway_api:GatewayApiAnalyzer"
+dra-network = "shiftscope.analyzers.dra_network:DRANetworkAnalyzer"
+helm4-readiness = "shiftscope.analyzers.helm4:Helm4ReadinessAnalyzer"
+
 [project.urls]
 Homepage = "https://shiftscope.dev"
 Repository = "https://github.com/thc1006/shiftscope"
@@ -78,14 +83,18 @@ packages = ["src/shiftscope"]
 [tool.ruff]
 target-version = "py312"
 line-length = 100
-src = ["src", "tests", "analyzers"]
+src = ["src", "tests"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "N", "W", "UP", "B", "SIM", "TCH"]
+select = ["E", "F", "I", "N", "W", "UP", "B", "SIM"]
+# TCH removed: we need runtime imports, not TYPE_CHECKING blocks
+# SIM108 ignored: ternary for if/else is less readable in test code
+ignore = ["SIM108"]
+per-file-ignores = {"src/shiftscope/analyzers/**.py" = ["E501"], "tests/**.py" = ["E501"]}
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src", "analyzers"]
+pythonpath = ["src"]
 
 [tool.coverage.run]
 source = ["shiftscope"]

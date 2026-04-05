@@ -85,18 +85,24 @@ class TestRuleABC:
     def test_subclass_missing_rule_id_raises(self):
         """CR-35: __init_subclass__ should catch missing class attributes."""
         with pytest.raises(TypeError, match="must define class attribute 'rule_id'"):
+
             class BadRule(Rule):
                 severity = Severity.INFO
+
                 def applies_to(self, context: dict) -> bool:
                     return True
+
                 def evaluate(self, context: dict) -> Finding | None:
                     return None
 
     def test_subclass_missing_severity_raises(self):
         with pytest.raises(TypeError, match="must define class attribute 'severity'"):
+
             class BadRule(Rule):
                 rule_id = "bad"
+
                 def applies_to(self, context: dict) -> bool:
                     return True
+
                 def evaluate(self, context: dict) -> Finding | None:
                     return None

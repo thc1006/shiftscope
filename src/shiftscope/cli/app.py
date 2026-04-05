@@ -26,14 +26,16 @@ def build_cli(registry: AnalyzerRegistry) -> typer.Typer:
     ) -> None:
         """Run a migration analyzer on an input file."""
         if output not in ("json", "markdown"):
-            typer.echo(f"Error: unsupported output format '{output}'. Use 'json' or 'markdown'.", err=True)
+            typer.echo(
+                f"Error: unsupported output format '{output}'. Use 'json' or 'markdown'.", err=True
+            )
             raise typer.Exit(code=1)
 
         try:
             analyzer = registry.get(analyzer_name)
         except KeyError:
             typer.echo(f"Error: analyzer '{analyzer_name}' not found.", err=True)
-            raise typer.Exit(code=1)
+            raise typer.Exit(code=1) from None
 
         report = analyzer.analyze(input_path)
 

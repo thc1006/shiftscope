@@ -12,17 +12,17 @@ from __future__ import annotations
 import sys
 from typing import Any
 
+from pydantic import BaseModel, ConfigDict
+
 # StrEnum is native in 3.11+; shim for development on 3.10 systems.
 # pyproject.toml targets >=3.12; remove shim when CI enforces that.
-if sys.version_info >= (3, 11):
+if sys.version_info >= (3, 11):  # noqa: UP036
     from enum import StrEnum
 else:
     from enum import Enum
 
-    class StrEnum(str, Enum):
+    class StrEnum(str, Enum):  # noqa: UP042
         pass
-
-from pydantic import BaseModel, ConfigDict
 
 
 class Severity(StrEnum):

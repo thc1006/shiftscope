@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.11.3"
+      - run: uv python install 3.12
+      - run: uv sync --group dev --group test --extra cli
+      - run: uv run ruff check src tests
+      - run: uv run python -m compileall src tests -q
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.11.3"
+      - run: uv python install ${{ matrix.python-version }}
+      - run: uv sync --group test --extra cli
+      - run: uv run pytest --cov --cov-report=term-missing --cov-fail-under=90

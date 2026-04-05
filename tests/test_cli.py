@@ -9,8 +9,6 @@ from typer.testing import CliRunner
 from shiftscope.cli.app import build_cli
 from shiftscope.core.analyzer import AnalyzerRegistry
 
-from tests.stubs import StubAnalyzer
-
 
 class TestBuildCLI:
     def test_build_cli_returns_callable(self, registry_with_stub):
@@ -23,7 +21,9 @@ class TestBuildCLI:
         input_file.write_text("apiVersion: v1\n")
 
         runner = CliRunner()
-        result = runner.invoke(app, ["analyze", "stub-analyzer", str(input_file), "--output", "json"])
+        result = runner.invoke(
+            app, ["analyze", "stub-analyzer", str(input_file), "--output", "json"]
+        )
         assert result.exit_code == 0
         parsed = json.loads(result.output)
         assert parsed["analyzer_name"] == "stub-analyzer"
@@ -35,7 +35,9 @@ class TestBuildCLI:
         input_file.write_text("apiVersion: v1\n")
 
         runner = CliRunner()
-        result = runner.invoke(app, ["analyze", "stub-analyzer", str(input_file), "--output", "markdown"])
+        result = runner.invoke(
+            app, ["analyze", "stub-analyzer", str(input_file), "--output", "markdown"]
+        )
         assert result.exit_code == 0
         assert "Migration Report" in result.output
         assert "[INFO]" in result.output
@@ -54,7 +56,9 @@ class TestBuildCLI:
         input_file.write_text("apiVersion: v1\n")
 
         runner = CliRunner()
-        result = runner.invoke(app, ["analyze", "stub-analyzer", str(input_file), "--output", "xml"])
+        result = runner.invoke(
+            app, ["analyze", "stub-analyzer", str(input_file), "--output", "xml"]
+        )
         assert result.exit_code != 0
         assert "unsupported output format" in result.output
 

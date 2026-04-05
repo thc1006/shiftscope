@@ -1,4 +1,4 @@
-"""Tests for JSON and Markdown renderers — TDD RED phase."""
+"""Tests for JSON and Markdown renderers."""
 
 from __future__ import annotations
 
@@ -61,9 +61,7 @@ class TestJsonRenderer:
         assert parsed["metadata"]["target_profile"] == "envoy-gateway"
 
     def test_render_json_empty_findings(self):
-        report = Report(
-            analyzer_name="a", analyzer_version="0.1.0", source="s", findings=[]
-        )
+        report = Report(analyzer_name="a", analyzer_version="0.1.0", source="s", findings=[])
         parsed = json.loads(render_json(report))
         assert parsed["findings"] == []
 
@@ -98,8 +96,6 @@ class TestMarkdownRenderer:
         assert "certificate overlap" in md
 
     def test_render_markdown_empty_findings(self):
-        report = Report(
-            analyzer_name="a", analyzer_version="0.1.0", source="s", findings=[]
-        )
+        report = Report(analyzer_name="a", analyzer_version="0.1.0", source="s", findings=[])
         md = render_markdown(report)
         assert "No findings" in md or "0 finding" in md or len(md) > 0

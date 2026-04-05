@@ -35,13 +35,16 @@ def build_mcp_tools(registry: AnalyzerRegistry) -> list[dict[str, Any]]:
             def analyze_fn(input_path: str) -> str:
                 report = a.analyze(input_path)
                 return render_json(report)
+
             return analyze_fn
 
-        tools.append({
-            "name": f"analyze_{safe_name}",
-            "description": f"Run {analyzer.name} migration analyzer. {analyzer.description}",
-            "fn": _make_analyze_fn(),
-        })
+        tools.append(
+            {
+                "name": f"analyze_{safe_name}",
+                "description": f"Run {analyzer.name} migration analyzer. {analyzer.description}",
+                "fn": _make_analyze_fn(),
+            }
+        )
 
     return tools
 
@@ -53,11 +56,10 @@ def create_mcp_server(registry: AnalyzerRegistry) -> Any:
     """
     try:
         from mcp.server.fastmcp import FastMCP
-    except ImportError:
+    except ImportError as err:
         raise MCPBridgeError(
-            "MCP support requires the 'mcp' extra. "
-            "Install with: pip install shiftscope[mcp]"
-        )
+            "MCP support requires the 'mcp' extra. Install with: pip install shiftscope[mcp]"
+        ) from err
 
     mcp = FastMCP("ShiftScope Migration Intelligence")
 

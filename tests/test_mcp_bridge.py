@@ -4,11 +4,8 @@ from __future__ import annotations
 
 import json
 
-import pytest
-
 from shiftscope.core.analyzer import AnalyzerRegistry
 from shiftscope.mcp.bridge import build_mcp_tools
-
 from tests.stubs import StubAnalyzer
 
 
