@@ -20,18 +20,16 @@ spec:
             - -c
             - |
               set -e
-              {{- if .Values.job.failOnCritical }}
               shiftscope analyze {{ .Values.job.analyzer }} {{ .Values.job.inputPath }} --output json > /tmp/results.json
-              {{- if ne .Values.job.outputFormat "json" }}
+{{ if ne .Values.job.outputFormat "json" }}
               shiftscope analyze {{ .Values.job.analyzer }} {{ .Values.job.inputPath }} --output {{ .Values.job.outputFormat }}
-              {{- else }}
+{{ else }}
               cat /tmp/results.json
-              {{- end }}
+{{ end }}
+{{ if .Values.job.failOnCritical }}
               CRITICAL="$(python3 -c 'import json; d=json.load(open("/tmp/results.json")); print(len([f for f in d.get("findings",[]) if f.get("severity")=="critical"]))')"
               if [ "$CRITICAL" -gt 0 ]; then echo "CRITICAL findings detected"; exit 1; fi
-              {{- else }}
-              shiftscope analyze {{ .Values.job.analyzer }} {{ .Values.job.inputPath }} --output {{ .Values.job.outputFormat }}
-              {{- end }}
+{{ end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       restartPolicy: Never

@@ -83,6 +83,8 @@ def build_cli(registry: AnalyzerRegistry) -> typer.Typer:
         if stdio and http:
             typer.echo("Error: --stdio and --http are mutually exclusive.", err=True)
             raise typer.Exit(code=1)
+        if stdio and port != 8080:
+            typer.echo("Warning: --port is ignored in --stdio mode.", err=True)
 
         from shiftscope.mcp.bridge import MCPBridgeError, create_mcp_server
 
