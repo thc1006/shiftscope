@@ -88,8 +88,22 @@ runs:
 
         registry = AnalyzerRegistry()
         registry.discover()
-        analyzer = registry.get("${{ inputs.analyzer }}")
-        report = analyzer.analyze("${{ inputs.input-path }}")
+
+        try:
+            analyzer = registry.get("${{ inputs.analyzer }}")
+        except KeyError:
+            print("::error::Analyzer '${{ inputs.analyzer }}' not found. Available: " +
+                  ", ".join(a.name for a in registry.list_all()))
+            sys.exit(1)
+
+        try:
+            report = analyzer.analyze("${{ inputs.input-path }}")
+        except FileNotFoundError:
+            print("::error::Input file not found: ${{ inputs.input-path }}")
+            sys.exit(1)
+        except Exception as e:
+            print(f"::error::Analysis failed: {type(e).__name__}: {e}")
+            sys.exit(1)
 
         # Write all formats from single analysis run
         with open(f"{results_dir}/results.json", "w") as f:
@@ -104,7 +118,8 @@ runs:
 
         # Counts
         finding_count = len(report.findings)
-        critical_count = len([f for f in report.findings if f.severity.value == "critical"])
+        from shiftscope.core.models import Severity
+        critical_count = len([f for f in report.findings if f.severity is Severity.CRITICAL])
 
         # Write to GITHUB_OUTPUT
         gh_output = os.environ.get("GITHUB_OUTPUT", "/dev/null")
