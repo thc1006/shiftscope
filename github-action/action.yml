@@ -1,0 +1,165 @@
+name: 'ShiftScope Migration Analysis'
+description: 'Analyze Kubernetes manifests for infrastructure API migration risks (Gateway API, DRA, Helm 4, MCP security, agent readiness)'
+author: 'thc1006'
+
+branding:
+  icon: 'search'
+  color: 'blue'
+
+inputs:
+  analyzer:
+    description: 'Analyzer to run: gateway-api, dra-network, helm4-readiness, telco-intent, agent-readiness, mcp-security'
+    required: true
+  input-path:
+    description: 'Path to the manifest or config file to analyze'
+    required: true
+  output-format:
+    description: 'Output format: json, markdown, or sarif'
+    required: false
+    default: 'json'
+  fail-on-critical:
+    description: 'Fail the check if critical findings are detected'
+    required: false
+    default: 'true'
+  post-pr-comment:
+    description: 'Post Markdown results as a PR comment (pull_request events only)'
+    required: false
+    default: 'false'
+  python-version:
+    description: 'Python version to use'
+    required: false
+    default: '3.12'
+  shiftscope-version:
+    description: 'ShiftScope version to install from PyPI'
+    required: false
+    default: '0.3.0'
+
+outputs:
+  results-json:
+    description: 'Analysis results as JSON string'
+    value: ${{ steps.analyze.outputs.results-json }}
+  results-file:
+    description: 'Path to JSON results file'
+    value: ${{ steps.analyze.outputs.results-file }}
+  finding-count:
+    description: 'Total number of findings'
+    value: ${{ steps.analyze.outputs.finding-count }}
+  critical-count:
+    description: 'Number of critical findings'
+    value: ${{ steps.analyze.outputs.critical-count }}
+  sarif-file:
+    description: 'Path to SARIF file (when output-format is sarif)'
+    value: ${{ steps.analyze.outputs.sarif-file }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v7
+      with:
+        version: "0.11.3"
+        enable-cache: true
+
+    - name: Install Python
+      shell: bash
+      run: uv python install ${{ inputs.python-version }}
+
+    - name: Install ShiftScope
+      shell: bash
+      run: uv pip install --system "shiftscope[cli]==${{ inputs.shiftscope-version }}"
+
+    - name: Run analysis
+      id: analyze
+      shell: bash
+      run: |
+        set -euo pipefail
+        RESULTS_DIR="${RUNNER_TEMP}/shiftscope-results"
+        mkdir -p "${RESULTS_DIR}"
+
+        # JSON output (always, for structured parsing)
+        shiftscope analyze "${{ inputs.analyzer }}" "${{ inputs.input-path }}" \
+          --output json > "${RESULTS_DIR}/results.json"
+
+        # Parse counts
+        FINDING_COUNT=$(python3 -c "
+        import json
+        data = json.load(open('${RESULTS_DIR}/results.json'))
+        print(len(data.get('findings', [])))
+        ")
+        CRITICAL_COUNT=$(python3 -c "
+        import json
+        data = json.load(open('${RESULTS_DIR}/results.json'))
+        print(len([f for f in data.get('findings', []) if f.get('severity') == 'critical']))
+        ")
+
+        # Markdown output (for PR comments)
+        shiftscope analyze "${{ inputs.analyzer }}" "${{ inputs.input-path }}" \
+          --output markdown > "${RESULTS_DIR}/results.md"
+
+        # SARIF output (optional)
+        if [ "${{ inputs.output-format }}" = "sarif" ]; then
+          shiftscope analyze "${{ inputs.analyzer }}" "${{ inputs.input-path }}" \
+            --output sarif > "${RESULTS_DIR}/results.sarif"
+          echo "sarif-file=${RESULTS_DIR}/results.sarif" >> "$GITHUB_OUTPUT"
+        fi
+
+        # Set outputs
+        echo "results-file=${RESULTS_DIR}/results.json" >> "$GITHUB_OUTPUT"
+        echo "finding-count=${FINDING_COUNT}" >> "$GITHUB_OUTPUT"
+        echo "critical-count=${CRITICAL_COUNT}" >> "$GITHUB_OUTPUT"
+        echo "results-json<<SHIFTSCOPE_EOF" >> "$GITHUB_OUTPUT"
+        cat "${RESULTS_DIR}/results.json" >> "$GITHUB_OUTPUT"
+        echo "SHIFTSCOPE_EOF" >> "$GITHUB_OUTPUT"
+
+        echo "::notice::ShiftScope: ${FINDING_COUNT} findings (${CRITICAL_COUNT} critical)"
+
+    - name: Post PR comment
+      if: inputs.post-pr-comment == 'true' && github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const resultsDir = process.env.RUNNER_TEMP + '/shiftscope-results';
+          const markdown = fs.readFileSync(resultsDir + '/results.md', 'utf8');
+          const marker = '<!-- shiftscope-analysis -->';
+          const body = [
+            marker,
+            '## ShiftScope Migration Analysis',
+            '',
+            markdown,
+            '',
+            `> Analyzer: \`${{ inputs.analyzer }}\` | Findings: **${{ steps.analyze.outputs.finding-count }}** | Critical: **${{ steps.analyze.outputs.critical-count }}**`,
+          ].join('\n');
+
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+          const existing = comments.find(c => c.body && c.body.includes(marker));
+
+          if (existing) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: existing.id,
+              body,
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+          }
+
+    - name: Fail on critical
+      if: inputs.fail-on-critical == 'true'
+      shell: bash
+      run: |
+        CRITICAL="${{ steps.analyze.outputs.critical-count }}"
+        if [ "${CRITICAL}" -gt 0 ]; then
+          echo "::error::ShiftScope: ${CRITICAL} critical finding(s) detected."
+          exit 1
+        fi

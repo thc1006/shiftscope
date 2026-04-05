@@ -185,6 +185,23 @@ mcp = create_mcp_server(registry)
 mcp.run()  # Exposes analyze_gateway_api, analyze_dra_network, etc.
 ```
 
+## GitHub Action
+
+Run ShiftScope in your CI/CD pipeline with PR comments and GitHub Code Scanning:
+
+```yaml
+# .github/workflows/shiftscope.yml
+- uses: thc1006/shiftscope/github-action@v1
+  with:
+    analyzer: gateway-api
+    input-path: ./manifests/ingress.yaml
+    output-format: sarif
+    fail-on-critical: 'true'
+    post-pr-comment: 'true'
+```
+
+See [`github-action/example-workflow.yml`](github-action/example-workflow.yml) for a complete example with SARIF upload to Code Scanning.
+
 ## Development
 
 ```bash
