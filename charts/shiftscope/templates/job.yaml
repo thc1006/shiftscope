@@ -19,10 +19,11 @@ spec:
             - sh
             - -c
             - |
-              shiftscope analyze {{ .Values.job.analyzer }} {{ .Values.job.inputPath }} --output {{ .Values.job.outputFormat }} > /tmp/results.json
-              cat /tmp/results.json
+              set -e
+              shiftscope analyze {{ .Values.job.analyzer }} {{ .Values.job.inputPath }} --output {{ .Values.job.outputFormat }}
               {{- if .Values.job.failOnCritical }}
-              CRITICAL=$(python3 -c "import json; data=json.load(open('/tmp/results.json')); print(len([f for f in data.get('findings',[]) if f.get('severity')=='critical']))")
+              shiftscope analyze {{ .Values.job.analyzer }} {{ .Values.job.inputPath }} --output json > /tmp/results.json
+              CRITICAL=$(python3 -c "import json; d=json.load(open('/tmp/results.json')); print(len([f for f in d.get('findings',[]) if f.get('severity')=='critical']))")
               if [ "$CRITICAL" -gt 0 ]; then echo "CRITICAL findings detected"; exit 1; fi
               {{- end }}
           resources:

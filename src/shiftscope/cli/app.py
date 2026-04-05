@@ -84,17 +84,7 @@ def build_cli(registry: AnalyzerRegistry) -> typer.Typer:
             typer.echo("Error: --stdio and --http are mutually exclusive.", err=True)
             raise typer.Exit(code=1)
 
-        try:
-            from shiftscope.mcp.bridge import create_mcp_server
-        except ImportError:
-            typer.echo(
-                "Error: MCP support requires the 'mcp' extra. "
-                "Install with: pip install shiftscope[mcp]",
-                err=True,
-            )
-            raise typer.Exit(code=1) from None
-
-        from shiftscope.mcp.bridge import MCPBridgeError
+        from shiftscope.mcp.bridge import MCPBridgeError, create_mcp_server
 
         try:
             mcp = create_mcp_server(registry)
