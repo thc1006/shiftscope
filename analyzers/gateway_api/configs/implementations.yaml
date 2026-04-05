@@ -1,0 +1,55 @@
+envoy-gateway:
+  display_name: Envoy Gateway
+  install_ref: docs/07_installation_matrix.md#envoy-gateway
+  strengths:
+    - Strong Gateway API focus
+    - Good fit for upstream-oriented conformance work
+    - Clear install path via Helm or quickstart
+  cautions:
+    - Still requires feature-by-feature validation for advanced ingress-nginx behavior
+    - Envoy-specific extension surface may still be needed
+nginx-gateway-fabric:
+  display_name: NGINX Gateway Fabric
+  install_ref: docs/07_installation_matrix.md#nginx-gateway-fabric
+  strengths:
+    - Familiar ecosystem for teams leaving ingress-nginx
+    - Gateway-native rather than annotation-first
+  cautions:
+    - Do not assume ingress-nginx annotation parity
+    - Migration still requires semantic review
+cilium:
+  display_name: Cilium Gateway API
+  install_ref: docs/07_installation_matrix.md#cilium
+  strengths:
+    - Attractive for teams already standardized on Cilium
+    - Strong cloud-native networking integration
+  cautions:
+    - Gateway feature support must be checked against current docs and CRD versions
+    - Operational fit depends on whether Cilium already owns cluster networking
+kong-operator:
+  display_name: Kong Gateway Operator
+  install_ref: docs/07_installation_matrix.md#kong-gateway-operator
+  strengths:
+    - Good when API management and policy features are central
+    - Operator-centric lifecycle
+  cautions:
+    - Adds a broader gateway platform choice, not just a migration target
+    - Operational surface can be larger than a narrow ingress replacement
+contour:
+  display_name: Contour
+  install_ref: docs/07_installation_matrix.md#contour
+  strengths:
+    - Mature Envoy-based option with Kubernetes focus
+    - Reasonable fit for progressive adoption
+  cautions:
+    - Verify current Gateway API coverage for required 1.5 features
+    - Some organizations may prefer a more Gateway-native positioning
+traefik:
+  display_name: Traefik Proxy
+  install_ref: docs/07_installation_matrix.md#traefik
+  strengths:
+    - Popular operator and developer ergonomics
+    - Straightforward Kubernetes install path
+  cautions:
+    - Validate exact Gateway API feature coverage before cutover
+    - Product surface and edition differences can affect rollout decisions

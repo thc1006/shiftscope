@@ -1,0 +1,25 @@
+nginx.ingress.kubernetes.io/enable-cors:
+  severity: medium
+  portable_status: partial
+  suggested_feature: HTTPRoute CORS filter
+  rationale: Gateway API 1.5 adds an HTTPRoute CORS filter, but migration still needs field-by-field policy review.
+nginx.ingress.kubernetes.io/backend-protocol:
+  severity: high
+  portable_status: partial
+  suggested_feature: BackendTLSPolicy / TLS origination review
+  rationale: Backend protocol hints often imply TLS origination or backend identity requirements that need explicit Gateway API configuration.
+nginx.ingress.kubernetes.io/auth-tls-secret:
+  severity: high
+  portable_status: partial
+  suggested_feature: Gateway client certificate validation
+  rationale: This suggests frontend mTLS; review client CA sources, listener/port boundaries, and HTTP/2 coalescing risk.
+nginx.ingress.kubernetes.io/server-snippet:
+  severity: critical
+  portable_status: low
+  suggested_feature: null
+  rationale: Free-form server snippets are not portably representable in standard Gateway API and usually require redesign or implementation-specific extensions.
+nginx.ingress.kubernetes.io/ssl-redirect:
+  severity: medium
+  portable_status: high
+  suggested_feature: HTTPRoute RequestRedirect
+  rationale: Simple HTTPS redirect patterns usually have a portable equivalent, but default behavior still needs regression testing.
