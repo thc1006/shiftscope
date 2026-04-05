@@ -4,6 +4,7 @@
 
 [![CI](https://github.com/thc1006/shiftscope/actions/workflows/ci.yml/badge.svg)](https://github.com/thc1006/shiftscope/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/shiftscope.svg)](https://pypi.org/project/shiftscope/)
 [![Python](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/)
 
 ShiftScope is a pluggable framework for building **migration intelligence analyzers** for Kubernetes infrastructure API transitions. Unlike API version detectors (Pluto, kubent) that only flag deprecated `apiVersion` strings, or format converters (ingress2gateway) that only transform YAML, ShiftScope provides **semantic risk analysis**, **implementation matching**, and **structured migration findings** through a pluggable analyzer SDK.
@@ -20,11 +21,15 @@ ShiftScope is a pluggable framework for building **migration intelligence analyz
 ## Quick Start
 
 ```bash
-# Install
+# Install (requires Python 3.12+)
 pip install shiftscope[cli]
 
 # List available analyzers
 shiftscope list
+
+# Clone the repo for example files
+git clone https://github.com/thc1006/shiftscope.git
+cd shiftscope
 
 # Analyze an Ingress manifest for Gateway API migration
 shiftscope analyze gateway-api examples/ingress-nginx/basic.yaml --output markdown
@@ -34,6 +39,9 @@ shiftscope analyze dra-network examples/dra-network-intent.json --output json
 
 # Analyze a Helm chart for v4 readiness
 shiftscope analyze helm4-readiness examples/helm-sample-app/ --output markdown
+
+# Analyze an agent config for production readiness
+shiftscope analyze agent-readiness examples/agent-readiness.json --output json
 ```
 
 ## Built-in Analyzers
@@ -132,7 +140,10 @@ class MyAnalyzer(Analyzer):
         self._rules = [MyRule()]
 
     def analyze(self, input_path, **kwargs):
-        context = {"config": load_config(input_path)}
+        import json
+        from pathlib import Path
+        config = json.loads(Path(input_path).read_text())
+        context = {"config": config}
         return Report(
             analyzer_name=self.name,
             analyzer_version=self.version,
@@ -160,8 +171,8 @@ from shiftscope.core.analyzer import AnalyzerRegistry
 
 registry = AnalyzerRegistry()
 registry.discover()
-server = create_mcp_server(registry)
-server.run()  # Exposes analyze_gateway_api, analyze_dra_network, etc.
+mcp = create_mcp_server(registry)
+mcp.run()  # Exposes analyze_gateway_api, analyze_dra_network, etc.
 ```
 
 ## Development
@@ -170,7 +181,7 @@ server.run()  # Exposes analyze_gateway_api, analyze_dra_network, etc.
 git clone https://github.com/thc1006/shiftscope.git
 cd shiftscope
 make bootstrap    # requires uv
-make test         # 193 tests
+make test         # run tests
 make lint         # ruff check
 make verify       # lint + test + compileall
 ```

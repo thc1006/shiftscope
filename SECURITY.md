@@ -6,7 +6,7 @@ If you discover a security vulnerability in ShiftScope, please report it respons
 
 **Do NOT open a public GitHub issue for security vulnerabilities.**
 
-Instead, please email: **security@shiftscope.dev**
+Instead, please email: **security@thc1006.dev**
 
 We will acknowledge receipt within 48 hours and provide a detailed response within 7 days.
 
@@ -14,6 +14,7 @@ We will acknowledge receipt within 48 hours and provide a detailed response with
 
 | Version | Supported |
 |---------|-----------|
+| 0.2.x   | Yes       |
 | 0.1.x   | Yes       |
 
 ## Disclosure Policy

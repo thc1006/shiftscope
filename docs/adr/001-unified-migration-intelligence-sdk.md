@@ -383,23 +383,31 @@ Five parallel research tracks were conducted to stress-test this ADR:
 | No-AI-coauthor guard | `.claude/settings.json`, `.git/hooks/commit-msg` | Verified | DONE |
 | **Total: 193 tests passing (as of v0.2.0)** | | | |
 
-### Remaining (Phase 1, Milestone 2)
+### Completed (Phase 1 M2 + Phase 2 + Phase 3) — as of v0.2.0
 
-| Task | Description | Key Design Decisions | Deps |
-|------|-------------|---------------------|------|
-| **Eval Harness** | Golden-file test runner: load case → run analyzer → diff against golden JSON | Use syrupy for pytest-native snapshots; support `--update-golden`; integrate with `EvalHarness` class | Models, Analyzer |
-| **CLI Scaffolding** | Auto-generate Typer CLI from registered analyzers: `shiftscope analyze <analyzer> <input>` | Typer + Rich; subcommands per analyzer; `--output json|markdown`; graceful ImportError for optional `cli` extra | Analyzer, Registry |
-| **MCP Bridge** | Auto-generate MCP tools from analyzers: `analyze_<name>`, `list_rules_<name>` | Use built-in FastMCP `@mcp.tool()` decorators; Pydantic models as params; stdio + Streamable HTTP transports; graceful ImportError for optional `mcp` extra | Analyzer, Registry |
-| **Gateway API Analyzer** | Port from `gateway-migration-orchestrator/`: annotation rules, TLS risk rules, implementation profiles | YAML parser for Ingress resources; rules: cors, backend-protocol, auth-tls-secret, server-snippet, wildcard-tls; profiles: envoy-gateway, nginx-gw-fabric, cilium | All SDK core |
+All originally "remaining" items have been implemented and shipped:
 
-### Remaining (Phase 2+)
+- Eval Harness ✅ — `src/shiftscope/eval/harness.py`
+- CLI Scaffolding ✅ — `src/shiftscope/cli/app.py`
+- MCP Bridge ✅ — `src/shiftscope/mcp/bridge.py`
+- Gateway API Analyzer ✅ — `src/shiftscope/analyzers/gateway_api/`
+- DRA Networking Analyzer ✅ — `src/shiftscope/analyzers/dra_network/`
+- Helm 4 Readiness Analyzer ✅ — `src/shiftscope/analyzers/helm4/`
+- Telco Intent Analyzer ✅ — `src/shiftscope/analyzers/telco_intent/`
+- Agent Readiness Analyzer ✅ — `src/shiftscope/analyzers/agent_readiness/`
+- AI Augmentation ✅ — `src/shiftscope/ai/augment.py`
+- MCP Discovery + A2A ✅ — `src/shiftscope/mcp/discovery.py`
+- Plugin Discovery Integration Tests ✅
+- Package Smoke Tests ✅
+- PyPI v0.1.0 + v0.2.0 published ✅
+- GitHub Actions CI + CodeQL ✅
+
+### Remaining (Phase 4+)
 
 | Phase | Tasks | Target |
 |-------|-------|--------|
-| **Phase 2** | DRA analyzer (port from netintent-dra-bridge-v2); Helm 4 analyzer (port from helmforge-lab-m2); entry_points plugin discovery activation; README.md with quickstart | Community preview |
-| **Phase 3** | Telco intent analyzer; agent readiness analyzer; optional PydanticAI augmentation; A2A Agent Card | Broader adoption |
-| **Phase 4** | CNCF Landscape listing; TAG Infrastructure presentation; CNCF Sandbox proposal; CRD/Operator layer (Go wrapper) | CNCF submission (target: 2026-08 or 2026-10 TOC review) |
-| **Phase 5** | GitHub Action; CI/CD integration; Argo Workflows; KubeCon NA 2026 CFP submission | Ecosystem integration |
+| **Phase 4** | CNCF Landscape listing (needs 300 stars); TAG presentation; Sandbox proposal; Go CLI wrapper | CNCF submission |
+| **Phase 5** | GitHub Action; Argo Workflows; KubeCon NA 2026 CFP; kagent MCPServer CRD | Ecosystem integration |
 
 ### How to Continue Development on a New Device
 

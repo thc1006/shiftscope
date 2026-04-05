@@ -1,0 +1,16 @@
+{
+    "agent_name": "demo-safe-agent",
+    "required_tools": [
+        "sum",
+        "ask_user"
+    ],
+    "allowed_tools": [
+        "sum",
+        "ask_user",
+        "read_only_k8s"
+    ],
+    "token_budget_limit": 50000,
+    "used_tokens": 12000,
+    "otel_enabled": true,
+    "trace_coverage_ratio": 0.92
+}
