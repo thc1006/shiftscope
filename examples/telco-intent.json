@@ -1,0 +1,12 @@
+{
+  "service_name": "oai-upf-east",
+  "operator": "swisscom-lab",
+  "region": "eu-central",
+  "dnn": "internet",
+  "require_ipv4": true,
+  "latency_profile": "low",
+  "notes": {
+    "source": "transcript-grounded-demo",
+    "goal": "separate abstraction, validation, and provenance"
+  }
+}
