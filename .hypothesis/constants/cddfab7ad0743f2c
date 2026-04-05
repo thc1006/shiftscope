@@ -1,0 +1,4 @@
+# file: /home/thc1006/dev/project/shiftscope/src/shiftscope/render/sarif_renderer.py
+# hypothesis_version: 6.151.10
+
+['$schema', '2.1.0', 'ShiftScope', 'artifactLocation', 'defaultConfiguration', 'driver', 'error', 'fullDescription', 'helpUri', 'id', 'informationUri', 'level', 'locations', 'message', 'name', 'note', 'physicalLocation', 'results', 'ruleId', 'rules', 'runs', 'shortDescription', 'text', 'tool', 'uri', 'version', 'warning']
