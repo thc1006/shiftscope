@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from shiftscope.core.models import Report
 from shiftscope.eval.harness import EvalCase, EvalHarness
-
 from tests.stubs import StubAnalyzer
 
 
@@ -57,9 +56,9 @@ class TestEvalHarness:
             expected = analyzer.analyze(str(input_file))
             golden_file = tmp_path / f"golden_{i}.json"
             golden_file.write_text(expected.model_dump_json(indent=2))
-            cases.append(EvalCase(
-                name=f"case-{i}", input_path=str(input_file), golden_path=str(golden_file)
-            ))
+            cases.append(
+                EvalCase(name=f"case-{i}", input_path=str(input_file), golden_path=str(golden_file))
+            )
 
         harness = EvalHarness(analyzer=analyzer)
         results = harness.run_all(cases)
@@ -73,7 +72,9 @@ class TestEvalHarness:
         golden_file = tmp_path / "golden.json"
         golden_file.write_text("{}")
 
-        case = EvalCase(name="update-test", input_path=str(input_file), golden_path=str(golden_file))
+        case = EvalCase(
+            name="update-test", input_path=str(input_file), golden_path=str(golden_file)
+        )
         harness = EvalHarness(analyzer=analyzer)
         harness.update_golden(case)
 
@@ -86,8 +87,11 @@ class TestEvalHarness:
         input_file = tmp_path / "input.yaml"
         input_file.write_text("test\n")
 
-        case = EvalCase(name="missing", input_path=str(input_file), golden_path=str(tmp_path / "nope.json"))
+        case = EvalCase(
+            name="missing", input_path=str(input_file), golden_path=str(tmp_path / "nope.json")
+        )
         harness = EvalHarness(analyzer=analyzer)
         import pytest
+
         with pytest.raises(FileNotFoundError):
             harness.run_case(case)

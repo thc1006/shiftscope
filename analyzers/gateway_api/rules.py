@@ -20,11 +20,12 @@ _SEVERITY_MAP = {
 
 
 def _load_annotation_mappings() -> dict[str, dict]:
-    with open(_CONFIGS_DIR / "annotation_mappings.yaml", "r") as f:
+    with open(_CONFIGS_DIR / "annotation_mappings.yaml") as f:
         return yaml.safe_load(f)
 
 
 # --- Annotation rules ---
+
 
 class AnnotationRule(Rule):
     """Rule for a specific known Ingress NGINX annotation."""
@@ -76,7 +77,8 @@ class UnknownAnnotationRule(Rule):
     def evaluate(self, context: dict[str, Any]) -> Finding | None:
         annotations = context.get("annotations", {})
         unknown = [
-            k for k in sorted(annotations)
+            k
+            for k in sorted(annotations)
             if k.startswith("nginx.ingress.kubernetes.io/") and k not in self._known_keys
         ]
         if not unknown:
@@ -94,6 +96,7 @@ class UnknownAnnotationRule(Rule):
 
 
 # --- TLS risk rules ---
+
 
 class WildcardTLSRule(Rule):
     """Detects wildcard TLS hosts that may cause certificate/listener issues."""

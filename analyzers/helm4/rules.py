@@ -26,7 +26,7 @@ class ChartApiV2Rule(Rule):
             severity=self.severity,
             title="Chart still on API v2",
             detail="Helm 4 continues to support v2, but new capabilities (sequencing, alternate render engines, signer plugins) land on the v3 roadmap.",
-            evidence=f"Chart.yaml apiVersion: v2",
+            evidence="Chart.yaml apiVersion: v2",
             recommendation="Create v3 migration backlog; do not force-convert immediately.",
         )
 

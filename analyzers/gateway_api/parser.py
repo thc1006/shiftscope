@@ -15,7 +15,7 @@ def load_ingresses(path: str | Path) -> list[dict[str, Any]]:
       - name, namespace, annotations, tls_hosts, rules
     """
     ingresses: list[dict[str, Any]] = []
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         for doc in yaml.safe_load_all(f):
             if not isinstance(doc, dict):
                 continue
@@ -26,11 +26,13 @@ def load_ingresses(path: str | Path) -> list[dict[str, Any]]:
             tls_hosts: list[str] = []
             for tls_entry in spec.get("tls") or []:
                 tls_hosts.extend(tls_entry.get("hosts") or [])
-            ingresses.append({
-                "name": metadata.get("name", "unknown"),
-                "namespace": metadata.get("namespace", "default"),
-                "annotations": metadata.get("annotations") or {},
-                "tls_hosts": tls_hosts,
-                "rules": spec.get("rules") or [],
-            })
+            ingresses.append(
+                {
+                    "name": metadata.get("name", "unknown"),
+                    "namespace": metadata.get("namespace", "default"),
+                    "annotations": metadata.get("annotations") or {},
+                    "tls_hosts": tls_hosts,
+                    "rules": spec.get("rules") or [],
+                }
+            )
     return ingresses

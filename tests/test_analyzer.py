@@ -6,7 +6,6 @@ import pytest
 
 from shiftscope.core.analyzer import Analyzer, AnalyzerRegistry
 from shiftscope.core.models import Report
-
 from tests.stubs import StubAnalyzer
 
 

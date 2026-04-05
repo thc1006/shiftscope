@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from shiftscope.core.models import Finding, Report, Severity
+from shiftscope.core.models import Report, Severity
 
 EXAMPLES_DIR = Path(__file__).resolve().parents[2] / "examples"
 SAMPLE_CHART = EXAMPLES_DIR / "helm-sample-app"
@@ -15,18 +15,21 @@ SAMPLE_CHART = EXAMPLES_DIR / "helm-sample-app"
 @pytest.fixture
 def analyzer():
     from analyzers.helm4.analyzer import Helm4ReadinessAnalyzer
+
     return Helm4ReadinessAnalyzer()
 
 
 class TestChartParser:
     def test_parse_sample_chart(self):
         from analyzers.helm4.parser import parse_chart
+
         chart = parse_chart(str(SAMPLE_CHART))
         assert chart["api_version"] == "v2"
         assert chart["name"] == "sample-app"
 
     def test_parse_missing_chart_yaml(self, tmp_path):
         from analyzers.helm4.parser import parse_chart
+
         with pytest.raises(FileNotFoundError):
             parse_chart(str(tmp_path))
 
@@ -34,32 +37,62 @@ class TestChartParser:
 class TestChartRules:
     def test_api_v2_detected(self, analyzer):
         rule = next(r for r in analyzer.list_rules() if r.rule_id == "helm-chart-api-v2")
-        ctx = {"api_version": "v2", "name": "test", "templates_content": "", "helmignore": "", "values_text": ""}
+        ctx = {
+            "api_version": "v2",
+            "name": "test",
+            "templates_content": "",
+            "helmignore": "",
+            "values_text": "",
+        }
         finding = rule.evaluate(ctx)
         assert finding is not None
         assert finding.severity == Severity.INFO
 
     def test_go_template_heavy(self, analyzer):
         rule = next(r for r in analyzer.list_rules() if r.rule_id == "helm-go-template-heavy")
-        ctx = {"api_version": "v2", "name": "test", "templates_content": '{{- include "helpers" . }}', "helmignore": "", "values_text": ""}
+        ctx = {
+            "api_version": "v2",
+            "name": "test",
+            "templates_content": '{{- include "helpers" . }}',
+            "helmignore": "",
+            "values_text": "",
+        }
         finding = rule.evaluate(ctx)
         assert finding is not None
         assert finding.severity == Severity.WARNING
 
     def test_no_go_template_no_finding(self, analyzer):
         rule = next(r for r in analyzer.list_rules() if r.rule_id == "helm-go-template-heavy")
-        ctx = {"api_version": "v2", "name": "test", "templates_content": "simple: value", "helmignore": "", "values_text": ""}
+        ctx = {
+            "api_version": "v2",
+            "name": "test",
+            "templates_content": "simple: value",
+            "helmignore": "",
+            "values_text": "",
+        }
         assert rule.evaluate(ctx) is None
 
     def test_helmignore_parity(self, analyzer):
         rule = next(r for r in analyzer.list_rules() if r.rule_id == "helm-helmignore-parity")
-        ctx = {"api_version": "v2", "name": "test", "templates_content": "", "helmignore": "**/*.bak\n/temp", "values_text": ""}
+        ctx = {
+            "api_version": "v2",
+            "name": "test",
+            "templates_content": "",
+            "helmignore": "**/*.bak\n/temp",
+            "values_text": "",
+        }
         finding = rule.evaluate(ctx)
         assert finding is not None
 
     def test_values_transform_candidate(self, analyzer):
         rule = next(r for r in analyzer.list_rules() if r.rule_id == "helm-values-transform")
-        ctx = {"api_version": "v2", "name": "test", "templates_content": "", "helmignore": "", "values_text": "subchartOverrides:\n  key: val\n"}
+        ctx = {
+            "api_version": "v2",
+            "name": "test",
+            "templates_content": "",
+            "helmignore": "",
+            "values_text": "subchartOverrides:\n  key: val\n",
+        }
         finding = rule.evaluate(ctx)
         assert finding is not None
 

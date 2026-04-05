@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import pytest
-
-from shiftscope.core.models import Finding, Report, Severity
-from analyzers.gateway_api.parser import load_ingresses
 from analyzers.gateway_api.analyzer import GatewayApiAnalyzer
+from analyzers.gateway_api.parser import load_ingresses
+
+from shiftscope.core.models import Report, Severity
 
 EXAMPLES_DIR = Path(__file__).resolve().parents[2] / "examples" / "ingress-nginx"
 BASIC_YAML = EXAMPLES_DIR / "basic.yaml"
@@ -21,6 +20,7 @@ def analyzer():
 
 
 # --- Parser tests ---
+
 
 class TestIngressParser:
     def test_parse_basic_ingress(self):
@@ -59,7 +59,9 @@ class TestIngressParser:
 
     def test_parse_no_annotations(self, tmp_path):
         bare = tmp_path / "bare.yaml"
-        bare.write_text("apiVersion: networking.k8s.io/v1\nkind: Ingress\nmetadata:\n  name: bare\nspec: {}\n")
+        bare.write_text(
+            "apiVersion: networking.k8s.io/v1\nkind: Ingress\nmetadata:\n  name: bare\nspec: {}\n"
+        )
         ingresses = load_ingresses(str(bare))
         assert ingresses[0]["annotations"] == {}
         assert ingresses[0]["tls_hosts"] == []
@@ -67,11 +69,13 @@ class TestIngressParser:
 
 # --- Annotation rule tests ---
 
+
 class TestAnnotationRules:
     def test_cors_annotation(self, analyzer):
         rule = next(r for r in analyzer.list_rules() if r.rule_id == "gw-annotation-enable-cors")
         ctx = {
-            "ingress_name": "test", "ingress_namespace": "default",
+            "ingress_name": "test",
+            "ingress_namespace": "default",
             "annotations": {"nginx.ingress.kubernetes.io/enable-cors": "true"},
             "tls_hosts": [],
         }
@@ -83,8 +87,11 @@ class TestAnnotationRules:
     def test_server_snippet_is_critical(self, analyzer):
         rule = next(r for r in analyzer.list_rules() if r.rule_id == "gw-annotation-server-snippet")
         ctx = {
-            "ingress_name": "test", "ingress_namespace": "default",
-            "annotations": {"nginx.ingress.kubernetes.io/server-snippet": "proxy_set_header X-Real-IP $remote_addr;"},
+            "ingress_name": "test",
+            "ingress_namespace": "default",
+            "annotations": {
+                "nginx.ingress.kubernetes.io/server-snippet": "proxy_set_header X-Real-IP $remote_addr;"
+            },
             "tls_hosts": [],
         }
         finding = rule.evaluate(ctx)
@@ -95,7 +102,8 @@ class TestAnnotationRules:
     def test_ssl_redirect_annotation(self, analyzer):
         rule = next(r for r in analyzer.list_rules() if r.rule_id == "gw-annotation-ssl-redirect")
         ctx = {
-            "ingress_name": "test", "ingress_namespace": "default",
+            "ingress_name": "test",
+            "ingress_namespace": "default",
             "annotations": {"nginx.ingress.kubernetes.io/ssl-redirect": "true"},
             "tls_hosts": [],
         }
@@ -105,9 +113,12 @@ class TestAnnotationRules:
         assert "HTTPRoute RequestRedirect" in finding.recommendation
 
     def test_backend_protocol_as_annotation(self, analyzer):
-        rule = next(r for r in analyzer.list_rules() if r.rule_id == "gw-annotation-backend-protocol")
+        rule = next(
+            r for r in analyzer.list_rules() if r.rule_id == "gw-annotation-backend-protocol"
+        )
         ctx = {
-            "ingress_name": "test", "ingress_namespace": "default",
+            "ingress_name": "test",
+            "ingress_namespace": "default",
             "annotations": {"nginx.ingress.kubernetes.io/backend-protocol": "HTTPS"},
             "tls_hosts": [],
         }
@@ -117,15 +128,18 @@ class TestAnnotationRules:
     def test_annotation_not_present_returns_none(self, analyzer):
         rule = next(r for r in analyzer.list_rules() if r.rule_id == "gw-annotation-enable-cors")
         ctx = {
-            "ingress_name": "test", "ingress_namespace": "default",
-            "annotations": {"unrelated": "val"}, "tls_hosts": [],
+            "ingress_name": "test",
+            "ingress_namespace": "default",
+            "annotations": {"unrelated": "val"},
+            "tls_hosts": [],
         }
         assert rule.evaluate(ctx) is None
 
     def test_unknown_annotation(self, analyzer):
         rule = next(r for r in analyzer.list_rules() if r.rule_id == "gw-annotation-unknown")
         ctx = {
-            "ingress_name": "test", "ingress_namespace": "default",
+            "ingress_name": "test",
+            "ingress_namespace": "default",
             "annotations": {"nginx.ingress.kubernetes.io/some-custom-thing": "val"},
             "tls_hosts": [],
         }
@@ -136,20 +150,25 @@ class TestAnnotationRules:
     def test_unknown_rule_ignores_non_nginx_annotations(self, analyzer):
         rule = next(r for r in analyzer.list_rules() if r.rule_id == "gw-annotation-unknown")
         ctx = {
-            "ingress_name": "test", "ingress_namespace": "default",
-            "annotations": {"app.kubernetes.io/name": "web"}, "tls_hosts": [],
+            "ingress_name": "test",
+            "ingress_namespace": "default",
+            "annotations": {"app.kubernetes.io/name": "web"},
+            "tls_hosts": [],
         }
         assert rule.evaluate(ctx) is None
 
 
 # --- TLS risk rule tests ---
 
+
 class TestTLSRiskRules:
     def test_wildcard_tls_detected(self, analyzer):
         rule = next(r for r in analyzer.list_rules() if r.rule_id == "gw-tls-wildcard")
         ctx = {
-            "ingress_name": "test", "ingress_namespace": "default",
-            "annotations": {}, "tls_hosts": ["*.example.com"],
+            "ingress_name": "test",
+            "ingress_namespace": "default",
+            "annotations": {},
+            "tls_hosts": ["*.example.com"],
         }
         finding = rule.evaluate(ctx)
         assert finding is not None
@@ -159,15 +178,18 @@ class TestTLSRiskRules:
     def test_no_wildcard_no_finding(self, analyzer):
         rule = next(r for r in analyzer.list_rules() if r.rule_id == "gw-tls-wildcard")
         ctx = {
-            "ingress_name": "test", "ingress_namespace": "default",
-            "annotations": {}, "tls_hosts": ["app.example.com"],
+            "ingress_name": "test",
+            "ingress_namespace": "default",
+            "annotations": {},
+            "tls_hosts": ["app.example.com"],
         }
         assert rule.evaluate(ctx) is None
 
     def test_frontend_mtls_detected(self, analyzer):
         rule = next(r for r in analyzer.list_rules() if r.rule_id == "gw-tls-frontend-mtls")
         ctx = {
-            "ingress_name": "test", "ingress_namespace": "default",
+            "ingress_name": "test",
+            "ingress_namespace": "default",
             "annotations": {"nginx.ingress.kubernetes.io/auth-tls-secret": "ns/ca"},
             "tls_hosts": [],
         }
@@ -178,7 +200,8 @@ class TestTLSRiskRules:
     def test_backend_protocol_tls_risk(self, analyzer):
         rule = next(r for r in analyzer.list_rules() if r.rule_id == "gw-tls-backend-protocol")
         ctx = {
-            "ingress_name": "test", "ingress_namespace": "default",
+            "ingress_name": "test",
+            "ingress_namespace": "default",
             "annotations": {"nginx.ingress.kubernetes.io/backend-protocol": "HTTPS"},
             "tls_hosts": [],
         }
@@ -188,6 +211,7 @@ class TestTLSRiskRules:
 
 
 # --- Analyzer integration tests ---
+
 
 class TestGatewayApiAnalyzer:
     def test_analyze_basic_yaml(self, analyzer):

@@ -81,7 +81,11 @@ line-length = 100
 src = ["src", "tests", "analyzers"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "N", "W", "UP", "B", "SIM", "TCH"]
+select = ["E", "F", "I", "N", "W", "UP", "B", "SIM"]
+# TCH removed: we need runtime imports, not TYPE_CHECKING blocks
+# SIM108 ignored: ternary for if/else is less readable in test code
+ignore = ["SIM108"]
+per-file-ignores = {"analyzers/*" = ["E501"], "tests/*" = ["E501"]}
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

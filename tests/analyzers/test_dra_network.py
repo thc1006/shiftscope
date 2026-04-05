@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from shiftscope.core.models import Finding, Report, Severity
+from shiftscope.core.models import Report, Severity
 
 EXAMPLES_DIR = Path(__file__).resolve().parents[2] / "examples"
 EXAMPLE_INTENT = EXAMPLES_DIR / "dra-network-intent.json"
@@ -16,14 +16,17 @@ EXAMPLE_INTENT = EXAMPLES_DIR / "dra-network-intent.json"
 @pytest.fixture
 def analyzer():
     from analyzers.dra_network.analyzer import DRANetworkAnalyzer
+
     return DRANetworkAnalyzer()
 
 
 # --- Parser tests ---
 
+
 class TestIntentParser:
     def test_parse_example_intent(self):
         from analyzers.dra_network.parser import load_intent
+
         intent = load_intent(str(EXAMPLE_INTENT))
         assert intent["name"] == "demo-ai-rdma-job"
         assert intent["gpu_count"] == 4
@@ -31,6 +34,7 @@ class TestIntentParser:
 
     def test_parse_minimal_intent(self, tmp_path):
         from analyzers.dra_network.parser import load_intent
+
         minimal = tmp_path / "min.json"
         minimal.write_text(json.dumps({"name": "test", "workload_kind": "Job"}))
         intent = load_intent(str(minimal))
@@ -40,6 +44,7 @@ class TestIntentParser:
 
     def test_parse_invalid_json_raises(self, tmp_path):
         from analyzers.dra_network.parser import load_intent
+
         bad = tmp_path / "bad.json"
         bad.write_text("not json")
         with pytest.raises(json.JSONDecodeError):
@@ -48,11 +53,13 @@ class TestIntentParser:
 
 # --- Rule tests ---
 
+
 class TestAlphaFeatureRules:
     def test_alpha_enabled_produces_warning(self, analyzer):
         rule = next(r for r in analyzer.list_rules() if r.rule_id == "dra-alpha-feature-gate")
         ctx = {
-            "name": "test", "alpha": {
+            "name": "test",
+            "alpha": {
                 "extended_resource_mapping": True,
                 "consumable_capacity": False,
                 "partitionable_devices": False,
@@ -66,7 +73,8 @@ class TestAlphaFeatureRules:
     def test_no_alpha_no_finding(self, analyzer):
         rule = next(r for r in analyzer.list_rules() if r.rule_id == "dra-alpha-feature-gate")
         ctx = {
-            "name": "test", "alpha": {
+            "name": "test",
+            "alpha": {
                 "extended_resource_mapping": False,
                 "consumable_capacity": False,
                 "partitionable_devices": False,
@@ -133,6 +141,7 @@ class TestValidationRules:
 
 # --- Analyzer integration tests ---
 
+
 class TestDRANetworkAnalyzer:
     def test_analyze_example_intent(self, analyzer):
         report = analyzer.analyze(str(EXAMPLE_INTENT))
@@ -149,7 +158,9 @@ class TestDRANetworkAnalyzer:
 
     def test_analyze_minimal_intent(self, analyzer, tmp_path):
         minimal = tmp_path / "min.json"
-        minimal.write_text(json.dumps({"name": "bare", "workload_kind": "Job", "legacy_bridge": False}))
+        minimal.write_text(
+            json.dumps({"name": "bare", "workload_kind": "Job", "legacy_bridge": False})
+        )
         report = analyzer.analyze(str(minimal))
         assert report.findings == []
 
