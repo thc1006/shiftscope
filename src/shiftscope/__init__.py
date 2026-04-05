@@ -1,6 +1,6 @@
 """ShiftScope — Migration intelligence for cloud-native infrastructure."""
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 from shiftscope.core.analyzer import Analyzer, AnalyzerRegistry
 from shiftscope.core.models import Finding, Report, Severity
