@@ -1,0 +1,24 @@
+{
+  "name": "demo-ai-rdma-job",
+  "namespace": "default",
+  "workload_kind": "Job",
+  "gpu_count": 4,
+  "requires_rdma": true,
+  "min_bandwidth_gbps": 200,
+  "low_latency": true,
+  "require_topology_alignment": true,
+  "secondary_networks": [
+    "rdma-net",
+    "storage-net"
+  ],
+  "preferred_device_class": "rdma-shared-v1",
+  "legacy_bridge": true,
+  "alpha": {
+    "extended_resource_mapping": false,
+    "consumable_capacity": false,
+    "partitionable_devices": false
+  },
+  "metadata": {
+    "source": "kccnceu2026-transcript"
+  }
+}
