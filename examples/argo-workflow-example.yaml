@@ -24,8 +24,8 @@ spec:
                   value: gateway-api
                 - name: input-path
                   value: ingress.yaml
-                - name: output-format
-                  value: json
+                - name: enable-sarif
+                  value: "false"
                 - name: fail-on-critical
                   value: "true"
                 - name: shiftscope-version

@@ -21,9 +21,9 @@ spec:
         description: "Analyzer to run (gateway-api, dra-network, helm4-readiness, etc.)"
       - name: input-path
         description: "Path to manifest/config file within the input artifact"
-      - name: output-format
-        value: "json"
-        description: "Set to sarif to additionally generate SARIF output (JSON and Markdown always generated)"
+      - name: enable-sarif
+        value: "false"
+        description: "Set to true to additionally generate SARIF output (JSON and Markdown always generated)"
       - name: fail-on-critical
         value: "true"
         description: "Fail step if critical findings detected"
@@ -36,7 +36,7 @@ spec:
         parameters:
           - name: analyzer
           - name: input-path
-          - name: output-format
+          - name: enable-sarif
           - name: fail-on-critical
           - name: shiftscope-version
         artifacts:
@@ -79,7 +79,7 @@ spec:
               "/work/manifests/{{inputs.parameters.input-path}}" \
               --output markdown > /work/output/results.md
 
-            if [ "{{inputs.parameters.output-format}}" = "sarif" ]; then
+            if [ "{{inputs.parameters.enable-sarif}}" = "sarif" ]; then
               shiftscope analyze \
                 "{{inputs.parameters.analyzer}}" \
                 "/work/manifests/{{inputs.parameters.input-path}}" \
