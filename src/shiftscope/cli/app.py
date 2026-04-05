@@ -27,7 +27,8 @@ def build_cli(registry: AnalyzerRegistry) -> typer.Typer:
         """Run a migration analyzer on an input file."""
         if output not in ("json", "markdown"):
             typer.echo(
-                f"Error: unsupported output format '{output}'. Use 'json' or 'markdown'.", err=True
+                f"Error: unsupported output format '{output}'. Use 'json' or 'markdown'.",
+                err=True,
             )
             raise typer.Exit(code=1)
 
@@ -37,7 +38,18 @@ def build_cli(registry: AnalyzerRegistry) -> typer.Typer:
             typer.echo(f"Error: analyzer '{analyzer_name}' not found.", err=True)
             raise typer.Exit(code=1) from None
 
-        report = analyzer.analyze(input_path)
+        try:
+            report = analyzer.analyze(input_path)
+        except FileNotFoundError as e:
+            missing_path = e.filename or input_path
+            typer.echo(
+                f"Error: input file not found: {missing_path}. Check that the path is correct.",
+                err=True,
+            )
+            raise typer.Exit(code=1) from None
+        except Exception as e:
+            typer.echo(f"Error analyzing '{input_path}': {type(e).__name__}: {e}", err=True)
+            raise typer.Exit(code=1) from None
 
         if output == "markdown":
             typer.echo(render_markdown(report))
@@ -60,6 +72,9 @@ def build_cli(registry: AnalyzerRegistry) -> typer.Typer:
 def main() -> None:
     """Entry point for the shiftscope CLI."""
     registry = AnalyzerRegistry()
-    registry.discover()
+    errors = registry.discover()
+    if errors:
+        for name in errors:
+            typer.echo(f"Warning: failed to load analyzer '{name}'", err=True)
     app = build_cli(registry)
     app()

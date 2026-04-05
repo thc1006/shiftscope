@@ -1,4 +1,4 @@
-.PHONY: bootstrap test lint verify demo clean
+.PHONY: bootstrap test lint verify clean
 
 bootstrap:
 	@command -v uv >/dev/null 2>&1 || { echo "uv not found. Install: curl -LsSf https://astral.sh/uv/install.sh | sh"; exit 1; }
@@ -17,7 +17,7 @@ format:
 	uv run ruff format src tests
 
 verify: lint test
-	python -m compileall src tests -q
+	uv run python -m compileall src tests -q
 
 clean:
 	rm -rf dist build *.egg-info .pytest_cache .coverage htmlcov out .ruff_cache

@@ -9,7 +9,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any
 
-from shiftscope.core.models import Finding, Report
+from shiftscope.core.models import Finding, Report, Severity
 from shiftscope.core.rule import Rule
 
 
@@ -35,15 +35,36 @@ class Analyzer(ABC):
     def run_rules(self, context: dict[str, Any]) -> list[Finding]:
         """Run all rules with applies_to short-circuit and collect findings.
 
-        Shared helper to avoid repeating the applies_to → evaluate loop
-        in every analyzer implementation.
+        If a rule raises an exception, it is caught and reported as a
+        CRITICAL finding so the analysis continues with remaining rules.
         """
+        import logging
+
+        logger = logging.getLogger(__name__)
         findings: list[Finding] = []
         for rule in self.list_rules():
-            if rule.applies_to(context):
-                finding = rule.evaluate(context)
-                if finding is not None:
-                    findings.append(finding)
+            try:
+                if rule.applies_to(context):
+                    finding = rule.evaluate(context)
+                    if finding is not None:
+                        findings.append(finding)
+            except Exception as exc:
+                error_summary = f"{type(exc).__name__}: {exc}"
+                logger.warning("Rule '%s' raised an exception: %s", rule.rule_id, error_summary)
+                logger.debug("Traceback for rule '%s' failure", rule.rule_id, exc_info=True)
+                findings.append(
+                    Finding(
+                        rule_id=rule.rule_id,
+                        severity=Severity.CRITICAL,
+                        title=f"Rule '{rule.rule_id}' failed with an internal error",
+                        detail=(
+                            "This rule raised an unexpected exception "
+                            f"during evaluation: {error_summary}"
+                        ),
+                        evidence=f"rule_id={rule.rule_id}",
+                        recommendation="Report this issue to the analyzer maintainer.",
+                    )
+                )
         return findings
 
 

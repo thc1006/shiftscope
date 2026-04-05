@@ -27,13 +27,13 @@ pip install shiftscope[cli]
 shiftscope list
 
 # Analyze an Ingress manifest for Gateway API migration
-shiftscope analyze gateway-api manifests/ingress.yaml --output markdown
+shiftscope analyze gateway-api examples/ingress-nginx/basic.yaml --output markdown
 
 # Analyze a NetworkIntent for DRA migration
-shiftscope analyze dra-network intent.json --output json
+shiftscope analyze dra-network examples/dra-network-intent.json --output json
 
 # Analyze a Helm chart for v4 readiness
-shiftscope analyze helm4-readiness charts/my-app/ --output markdown
+shiftscope analyze helm4-readiness examples/helm-sample-app/ --output markdown
 ```
 
 ## Built-in Analyzers
@@ -154,7 +154,7 @@ server.run()  # Exposes analyze_gateway_api, analyze_dra_network, etc.
 git clone https://github.com/thc1006/shiftscope.git
 cd shiftscope
 make bootstrap    # requires uv
-make test         # 124 tests
+make test         # 186+ tests
 make lint         # ruff check
 make verify       # lint + test + compileall
 ```
@@ -167,7 +167,7 @@ See [ADR-001](docs/adr/001-unified-migration-intelligence-sdk.md) for the full a
 |-------|--------|-------|
 | 1: Core SDK + Reference Analyzer | Done | Models, Rule/Analyzer ABC, renderers, CLI, MCP bridge, Gateway API analyzer |
 | 2: Multi-Analyzer + CI | Done | DRA + Helm 4 analyzers, GitHub Actions CI, CodeQL |
-| 3: AI Augmentation | Next | Telco + agent readiness analyzers, PydanticAI, A2A |
+| 3: AI Augmentation | Done | Telco + agent readiness analyzers, PydanticAI, A2A |
 | 4: CNCF Sandbox | Planned | Landscape listing, TAG presentation, Sandbox proposal |
 | 5: Ecosystem | Planned | GitHub Action, Argo Workflows, KubeCon NA 2026 |
 

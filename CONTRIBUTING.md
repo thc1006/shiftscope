@@ -30,7 +30,7 @@ make lint
 
 ## Writing an Analyzer Plugin
 
-See `analyzers/gateway_api/` for a reference implementation. An analyzer plugin:
+See `src/shiftscope/analyzers/gateway_api/` for a reference implementation. An analyzer plugin:
 
 1. Subclasses `shiftscope.core.analyzer.Analyzer`
 2. Implements `analyze()` and `list_rules()` methods
