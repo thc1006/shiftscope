@@ -220,6 +220,8 @@ Run ShiftScope as an Argo Workflows pipeline step with conditional gates:
         value: "true"
 ```
 
+> Note: The `shiftscope-analyze` template requires a `manifests` input artifact. Wire it from a previous step (e.g., git-clone) as shown in the full example.
+
 See [`examples/argo-workflow-template.yaml`](examples/argo-workflow-template.yaml) for the full WorkflowTemplate and [`examples/argo-workflow-example.yaml`](examples/argo-workflow-example.yaml) for a complete example.
 
 ## Development
