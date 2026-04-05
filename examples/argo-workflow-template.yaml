@@ -1,0 +1,106 @@
+# ShiftScope Argo WorkflowTemplate
+# Runs migration analysis as a pipeline step with conditional gating.
+#
+# Usage:
+#   argo submit examples/argo-workflow-example.yaml
+#
+# Prerequisites:
+#   - Argo Workflows installed (v4.0+)
+#   - Python 3.12+ available in container image
+
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: shiftscope-analyze
+  labels:
+    app.kubernetes.io/part-of: shiftscope
+spec:
+  arguments:
+    parameters:
+      - name: analyzer
+        description: "Analyzer to run (gateway-api, dra-network, helm4-readiness, etc.)"
+      - name: input-path
+        description: "Path to manifest/config file within the input artifact"
+      - name: output-format
+        value: "json"
+        description: "Output format: json, markdown, or sarif"
+      - name: fail-on-critical
+        value: "true"
+        description: "Fail step if critical findings detected"
+      - name: shiftscope-version
+        value: "0.3.1"
+
+  templates:
+    - name: analyze
+      inputs:
+        parameters:
+          - name: analyzer
+          - name: input-path
+          - name: output-format
+          - name: fail-on-critical
+          - name: shiftscope-version
+        artifacts:
+          - name: manifests
+            path: /work/manifests
+      outputs:
+        artifacts:
+          - name: results-json
+            path: /work/output/results.json
+          - name: results-md
+            path: /work/output/results.md
+          - name: results-sarif
+            path: /work/output/results.sarif
+            optional: true
+        parameters:
+          - name: finding-count
+            valueFrom:
+              path: /work/output/finding-count
+          - name: critical-count
+            valueFrom:
+              path: /work/output/critical-count
+      container:
+        image: python:3.12-slim
+        command: [bash, -c]
+        args:
+          - |
+            set -euo pipefail
+            pip install -q "shiftscope[cli]=={{inputs.parameters.shiftscope-version}}"
+
+            mkdir -p /work/output
+
+            # Run analysis
+            shiftscope analyze \
+              "{{inputs.parameters.analyzer}}" \
+              "/work/manifests/{{inputs.parameters.input-path}}" \
+              --output json > /work/output/results.json
+
+            shiftscope analyze \
+              "{{inputs.parameters.analyzer}}" \
+              "/work/manifests/{{inputs.parameters.input-path}}" \
+              --output markdown > /work/output/results.md
+
+            if [ "{{inputs.parameters.output-format}}" = "sarif" ]; then
+              shiftscope analyze \
+                "{{inputs.parameters.analyzer}}" \
+                "/work/manifests/{{inputs.parameters.input-path}}" \
+                --output sarif > /work/output/results.sarif
+            fi
+
+            # Parse counts
+            python3 -c "
+            import json
+            data = json.load(open('/work/output/results.json'))
+            findings = data.get('findings', [])
+            critical = [f for f in findings if f.get('severity') == 'critical']
+            open('/work/output/finding-count', 'w').write(str(len(findings)))
+            open('/work/output/critical-count', 'w').write(str(len(critical)))
+            "
+
+            CRITICAL=$(cat /work/output/critical-count)
+            echo "ShiftScope: $(cat /work/output/finding-count) findings (${CRITICAL} critical)"
+
+            # Conditional gate
+            if [ "{{inputs.parameters.fail-on-critical}}" = "true" ] && [ "${CRITICAL}" -gt 0 ]; then
+              echo "CRITICAL findings detected — failing pipeline"
+              exit 1
+            fi
