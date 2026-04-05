@@ -74,6 +74,9 @@ def build_cli(registry: AnalyzerRegistry) -> typer.Typer:
     def mcp_serve(
         stdio: bool = typer.Option(False, "--stdio", help="Run MCP server via stdio transport"),
         http: bool = typer.Option(False, "--http", help="Run MCP server via HTTP transport"),
+        host: str = typer.Option(
+            "127.0.0.1", "--host", help="HTTP bind address (only with --http)"
+        ),
         port: int = typer.Option(8080, "--port", help="HTTP port (only with --http)"),
     ) -> None:
         """Run ShiftScope as an MCP server for AI agent consumption."""
@@ -92,7 +95,10 @@ def build_cli(registry: AnalyzerRegistry) -> typer.Typer:
         from shiftscope.mcp.bridge import MCPBridgeError, create_mcp_server
 
         try:
-            mcp = create_mcp_server(registry)
+            if stdio:
+                mcp = create_mcp_server(registry)
+            else:
+                mcp = create_mcp_server(registry, host=host, port=port)
         except MCPBridgeError as e:
             typer.echo(str(e), err=True)
             raise typer.Exit(code=1) from None
@@ -104,8 +110,8 @@ def build_cli(registry: AnalyzerRegistry) -> typer.Typer:
                 typer.echo("Starting MCP server (stdio)...", err=True)
                 mcp.run(transport="stdio")
             else:
-                typer.echo(f"Starting MCP server (http://0.0.0.0:{port})...", err=True)
-                mcp.run(transport="streamable-http", host="0.0.0.0", port=port)
+                typer.echo(f"Starting MCP server (http://{host}:{port})...", err=True)
+                mcp.run(transport="streamable-http")
         except Exception as e:
             typer.echo(f"MCP server error: {type(e).__name__}: {e}", err=True)
             raise typer.Exit(code=1) from None

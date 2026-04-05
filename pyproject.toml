@@ -66,7 +66,7 @@ mcp-security = "shiftscope.analyzers.mcp_security:MCPSecurityAnalyzer"
 [project.urls]
 Homepage = "https://github.com/thc1006/shiftscope"
 Repository = "https://github.com/thc1006/shiftscope"
-Documentation = "https://github.com/thc1006/shiftscope/blob/v0.2.0/docs/adr/001-unified-migration-intelligence-sdk.md"
+Documentation = "https://github.com/thc1006/shiftscope/blob/main/docs/adr/001-unified-migration-intelligence-sdk.md"
 
 [dependency-groups]
 dev = [

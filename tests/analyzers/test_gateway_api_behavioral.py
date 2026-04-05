@@ -159,6 +159,34 @@ class TestRewriteImpliesRegex:
 
 class TestTrailingSlash:
     def test_trailing_slash_flagged(self, analyzer, tmp_path):
+        """Path WITHOUT trailing slash should fire — nginx auto-redirects, GW API won't."""
+        path = _write_yaml(
+            tmp_path,
+            """\
+            apiVersion: networking.k8s.io/v1
+            kind: Ingress
+            metadata:
+              name: test
+            spec:
+              rules:
+              - host: app.example.com
+                http:
+                  paths:
+                  - path: "/my-path"
+                    pathType: Prefix
+                    backend:
+                      service:
+                        name: svc
+                        port:
+                          number: 80
+            """,
+        )
+        report = analyzer.analyze(path)
+        rule_ids = {f.rule_id for f in report.findings}
+        assert "gw-behavior-trailing-slash" in rule_ids
+
+    def test_trailing_slash_present_no_flag(self, analyzer, tmp_path):
+        """Path WITH trailing slash should NOT fire — already explicit."""
         path = _write_yaml(
             tmp_path,
             """\
@@ -182,7 +210,7 @@ class TestTrailingSlash:
         )
         report = analyzer.analyze(path)
         rule_ids = {f.rule_id for f in report.findings}
-        assert "gw-behavior-trailing-slash" in rule_ids
+        assert "gw-behavior-trailing-slash" not in rule_ids
 
 
 # --- Behavior 7: snippet no equivalent ---

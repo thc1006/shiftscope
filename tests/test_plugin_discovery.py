@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-from shiftscope.core.analyzer import AnalyzerRegistry
+from shiftscope.core.analyzer import Analyzer, AnalyzerRegistry
 from shiftscope.core.models import Report
 from tests.stubs import StubAnalyzer
 
@@ -40,12 +40,23 @@ class TestEntryPointDiscovery:
     def test_discover_handles_constructor_error(self):
         """If an analyzer class __init__ raises, it should be caught."""
 
-        def bad_constructor():
-            raise TypeError("required arg missing")
+        class BadAnalyzer(Analyzer):
+            name = "bad-init"
+            version = "0.1.0"
+            description = "breaks on init"
+
+            def __init__(self):
+                raise TypeError("required arg missing")
+
+            def analyze(self, input_path, **kwargs):
+                pass
+
+            def list_rules(self):
+                return []
 
         mock_ep = MagicMock()
         mock_ep.name = "bad-init"
-        mock_ep.load.return_value = bad_constructor
+        mock_ep.load.return_value = BadAnalyzer
 
         with patch("importlib.metadata.entry_points", return_value=[mock_ep]):
             registry = AnalyzerRegistry()
@@ -72,8 +83,8 @@ class TestEntryPointDiscovery:
         assert len(registry.list_all()) == 1
         assert registry.get("stub-analyzer").name == "stub-analyzer"
 
-    def test_discover_non_callable_skipped(self):
-        """If entry point loads a non-callable, it should be skipped (not registered)."""
+    def test_discover_non_analyzer_skipped(self):
+        """If entry point loads a non-Analyzer type, it should be skipped."""
         mock_ep = MagicMock()
         mock_ep.name = "not-callable"
         mock_ep.load.return_value = "just a string"
