@@ -1,0 +1,16 @@
+{
+  "agent_name": "market-research-bot",
+  "description": "Multi-agent market analysis (inspired by $47K LangChain incident)",
+  "required_tools": ["web_search", "summarize", "write_report", "send_email"],
+  "allowed_tools": ["web_search", "summarize", "write_report", "send_email"],
+  "model": "claude-opus-4-6",
+  "token_budget_limit": 0,
+  "used_tokens": 0,
+  "otel_enabled": false,
+  "trace_coverage_ratio": 0.0,
+  "max_iterations": null,
+  "retry_policy": null,
+  "kill_switch": false,
+  "cost_evidence_logging": false,
+  "graduated_response": null
+}
